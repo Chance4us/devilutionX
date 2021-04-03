@@ -241,16 +241,6 @@ int generatingLabelsState = 0; // 0 - waiting for the game to start, 1 = started
 bool isLabelHighlighted = false;
 int labelCenterOffsets[ITEMTYPES];
 
-void UpdateLabelOffsets(CelOutputBuffer out, BYTE *dst, int width)
-{
-	int xval = (dst - out.begin()) % out.pitch();
-	if (xval < drawMinX)
-		drawMinX = xval;
-	xval += width;
-	if (xval > drawMaxX)
-		drawMaxX = xval;
-}
-
 void AltPressed(bool pressed)
 {
 	altPressed = pressed;
@@ -259,6 +249,21 @@ void AltPressed(bool pressed)
 bool IsGeneratingLabels()
 {
 	return generatingLabelsState == 1;
+}
+
+bool IsLabelHighlighted()
+{
+	return isLabelHighlighted;
+}
+
+void UpdateLabelOffsets(CelOutputBuffer out, BYTE *dst, int width)
+{
+	int xval = (dst - out.begin()) % out.pitch();
+	if (xval < drawMinX)
+		drawMinX = xval;
+	xval += width;
+	if (xval > drawMaxX)
+		drawMaxX = xval;
 }
 
 void GenerateLabelOffsets(CelOutputBuffer out)
@@ -295,7 +300,7 @@ void AddItemToDrawQueue(int x, int y, int id)
 		x <<= 1;
 		y <<= 1;
 	}
-	x -= nameWidth / 2;
+	x -= nameWidth >> 1;
 	char clr = COL_WHITE;
 	if (it->_iMagical == ITEM_QUALITY_MAGIC)
 		clr = COL_BLUE;
