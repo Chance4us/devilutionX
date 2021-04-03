@@ -25,7 +25,7 @@ bool IsLabelHighlighted();
 void UpdateLabelOffsets(CelOutputBuffer out, BYTE *dst, int width);
 void GenerateLabelOffsets(CelOutputBuffer out);
 void AddItemToDrawQueue(int x, int y, int id);
-void HighlightItemsNameOnMap(CelOutputBuffer out);
+void HighlightItemNames(CelOutputBuffer out);
 
 DEVILUTION_END_NAMESPACE
 

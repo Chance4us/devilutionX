@@ -309,7 +309,7 @@ void AddItemToDrawQueue(int x, int y, int id)
 	drawQ.push_back(drawingQueue(id, it->_ix, it->_iy, x, y, nameWidth, 13, clr, textOnGround));
 }
 
-void HighlightItemsNameOnMap(CelOutputBuffer out)
+void HighlightItemNames(CelOutputBuffer out)
 {
 	isLabelHighlighted = false;
 	if (sgOptions.Gameplay.bAltHighlight == 0 || (sgOptions.Gameplay.bAltHighlight == 1 && !altPressed) || (sgOptions.Gameplay.bAltHighlight == 2 && altPressed))
