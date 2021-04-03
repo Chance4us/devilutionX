@@ -216,32 +216,30 @@ void AutoGoldPickup(int pnum)
 	}
 }
 
-class drawingQueue {
-public:
-	int ItemID;
-	int Row;
-	int Col;
-	int x;
-	int y;
-	int width;
-	int height;
-	int color;
-	char text[64];
-	drawingQueue(int x2, int y2, int width2, int height2, int Row2, int Col2, int ItemID2, int q2, char *text2)
+struct drawingQueue {
+	int itemID, row, col, x, y, width, height, color;
+	std::string text;
+	drawingQueue(int itemID, int row, int col, int x, int y, int width, int height, int color, std::string text)
+	    : itemID(itemID)
+	    , row(row)
+	    , col(col)
+	    , x(x)
+	    , y(y)
+	    , width(width)
+	    , height(height)
+	    , color(color)
+	    , text(text)
 	{
-		x = x2;
-		y = y2;
-		Row = Row2;
-		Col = Col2;
-		ItemID = ItemID2;
-		width = width2;
-		height = height2;
-		color = q2;
-		strcpy(text, text2);
 	}
 };
 
 std::vector<drawingQueue> drawQ;
+int drawMinX;
+int drawMaxX;
+bool altPressed = false;
+int generatingLabelsState = 0; // 0 - waiting for the game to start, 1 = started generating, 2 = finished generating
+bool isLabelHighlighted = false;
+int labelCenterOffsets[ITEMTYPES];
 
 void UpdateLabelOffsets(CelOutputBuffer out, BYTE *dst, int width)
 {
@@ -260,22 +258,22 @@ void AltPressed(bool pressed)
 
 bool IsGeneratingLabels()
 {
-	return isGeneratingLabels;
+	return generatingLabelsState == 1;
 }
 
 void GenerateLabelOffsets(CelOutputBuffer out)
 {
-	if (!isGeneratingLabels)
+	if (generatingLabelsState == 2)
 		return;
+	generatingLabelsState = 1;
 	int itemTypes = gbIsHellfire ? ITEMTYPES : 35;
 	for (int i = 0; i < itemTypes; i++) {
 		drawMinX = gnScreenWidth;
 		drawMaxX = 0;
-		CelOutputBuffer out = GlobalBackBuffer();
 		CelClippedDrawTo(out, out.pitch() / 2 - 16, 351, itemanims[i], ItemAnimLs[i], 96);
 		labelCenterOffsets[i] = drawMinX - out.pitch() / 2 + (drawMaxX - drawMinX) / 2;
 	}
-	isGeneratingLabels = false;
+	generatingLabelsState = 2;
 }
 
 void AddItemToDrawQueue(int x, int y, int id)
@@ -285,11 +283,10 @@ void AddItemToDrawQueue(int x, int y, int id)
 	ItemStruct *it = &item[id];
 
 	char textOnGround[64];
-	if (it->_itype == ITYPE_GOLD) {
+	if (it->_itype == ITYPE_GOLD)
 		sprintf(textOnGround, "%i gold", it->_ivalue);
-	} else {
+	else
 		sprintf(textOnGround, "%s", it->_iIdentified ? it->_iIName : it->_iName);
-	}
 
 	int nameWidth = GetTextWidth((char *)textOnGround);
 	x += labelCenterOffsets[ItemCAnimTbl[it->_iCurs]];
@@ -304,13 +301,13 @@ void AddItemToDrawQueue(int x, int y, int id)
 		clr = COL_BLUE;
 	if (it->_iMagical == ITEM_QUALITY_UNIQUE)
 		clr = COL_GOLD;
-	drawQ.push_back(drawingQueue(x, y, nameWidth, 13, it->_ix, it->_iy, id, clr, textOnGround));
+	drawQ.push_back(drawingQueue(id, it->_ix, it->_iy, x, y, nameWidth, 13, clr, textOnGround));
 }
 
 void HighlightItemsNameOnMap(CelOutputBuffer out)
 {
 	isLabelHighlighted = false;
-	if (highlightItemsMode == 0 || (highlightItemsMode == 1 && !altPressed) || (highlightItemsMode == 2 && altPressed))
+	if (sgOptions.Gameplay.bAltHighlight == 0 || (sgOptions.Gameplay.bAltHighlight == 1 && !altPressed) || (sgOptions.Gameplay.bAltHighlight == 2 && altPressed))
 		return;
 	const int borderX = 5;
 	for (unsigned int i = 0; i < drawQ.size(); ++i) {
@@ -343,9 +340,8 @@ void HighlightItemsNameOnMap(CelOutputBuffer out)
 	for (unsigned int i = 0; i < drawQ.size(); ++i) {
 		drawingQueue t = drawQ[i];
 
-		if (t.x < 0 || t.x >= gnScreenWidth || t.y < 0 || t.y >= gnScreenHeight) {
+		if (t.x < 0 || t.x >= gnScreenWidth || t.y < 0 || t.y >= gnScreenHeight)
 			continue;
-		}
 
 		if (MouseX >= t.x && MouseX <= t.x + t.width && MouseY >= t.y - t.height && MouseY <= t.y) {
 			if ((invflag || sbookflag) && MouseX > RIGHT_PANEL && MouseY <= SPANEL_HEIGHT) {
@@ -354,16 +350,16 @@ void HighlightItemsNameOnMap(CelOutputBuffer out)
 			} else if (gmenu_is_active() || PauseMode != 0 || deathflag) {
 			} else {
 				isLabelHighlighted = true;
-				cursmx = t.Row;
-				cursmy = t.Col;
-				pcursitem = t.ItemID;
+				cursmx = t.row;
+				cursmy = t.col;
+				pcursitem = t.itemID;
 			}
 		}
 		int bgcolor = 0;
-		if (pcursitem == t.ItemID)
+		if (pcursitem == t.itemID)
 			bgcolor = 134;
 		FillRect(out, t.x, t.y - t.height, t.width + 1, t.height, bgcolor);
-		PrintGameStr(out, t.x, t.y - 1, t.text, (text_color)t.color);
+		PrintGameStr(out, t.x, t.y - 1, t.text.c_str(), (text_color)t.color);
 	}
 	drawQ.clear();
 }
