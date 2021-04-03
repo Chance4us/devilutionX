@@ -144,7 +144,10 @@ void CelBlitSafeTo(CelOutputBuffer out, int sx, int sy, BYTE *pRLEBytes, int nDa
 			if (!(width & 0x80)) {
 				i -= width;
 				if (dst < out.end() && dst > out.begin()) {
-					memcpy(dst, src, width);
+					// GenerateLabelOffsets loops this function for all items, we don't actually want them on screen, just the min and max x position
+					if (!IsGeneratingLabels())
+						memcpy(dst, src, width);
+					UpdateLabelOffsets(out, dst, width);
 				}
 				src += width;
 				dst += width;
