@@ -217,9 +217,10 @@ void AutoGoldPickup(int pnum)
 }
 
 struct drawingQueue {
-	int itemID, row, col, x, y, width, height, color;
+	int itemID, row, col, x, y, width, height;
+	text_color color;
 	std::string text;
-	drawingQueue(int itemID, int row, int col, int x, int y, int width, int height, int color, std::string text)
+	drawingQueue(int itemID, int row, int col, int x, int y, int width, int height, text_color color, std::string text)
 	    : itemID(itemID)
 	    , row(row)
 	    , col(col)
@@ -301,7 +302,7 @@ void AddItemToDrawQueue(int x, int y, int id)
 		y <<= 1;
 	}
 	x -= nameWidth >> 1;
-	char clr = COL_WHITE;
+	text_color clr = COL_WHITE;
 	if (it->_iMagical == ITEM_QUALITY_MAGIC)
 		clr = COL_BLUE;
 	if (it->_iMagical == ITEM_QUALITY_UNIQUE)
@@ -364,7 +365,7 @@ void HighlightItemNames(CelOutputBuffer out)
 		if (pcursitem == t.itemID)
 			bgcolor = 134;
 		FillRect(out, t.x, t.y - t.height, t.width + 1, t.height, bgcolor);
-		PrintGameStr(out, t.x, t.y - 1, t.text.c_str(), (text_color)t.color);
+		PrintGameStr(out, t.x, t.y - 1, t.text.c_str(), t.color);
 	}
 	drawQ.clear();
 }
