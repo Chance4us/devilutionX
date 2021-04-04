@@ -313,8 +313,6 @@ void AddItemToDrawQueue(int x, int y, int id)
 void HighlightItemNames(CelOutputBuffer out)
 {
 	isLabelHighlighted = false;
-	if (sgOptions.Gameplay.bAltHighlight == 0 || (sgOptions.Gameplay.bAltHighlight == 1 && !altPressed) || (sgOptions.Gameplay.bAltHighlight == 2 && altPressed))
-		return;
 	const int borderX = 5;
 	for (unsigned int i = 0; i < drawQ.size(); ++i) {
 		std::map<int, bool> backtrace;
