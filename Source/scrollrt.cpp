@@ -1199,7 +1199,7 @@ void DrawView(CelOutputBuffer out, int StartX, int StartY)
 		DrawAutomap(out.subregionY(0, gnViewportHeight));
 	}
 	DrawMonsterHealthBar(out);
-	ShowItemNameTooltips(out);
+	ShowItemNameLabels(out);
 
 	if (stextflag && !qtextflag)
 		DrawSText(out);
