@@ -3,12 +3,11 @@
  *
  * Quality of life features
  */
-#ifndef __QOL_H__
-#define __QOL_H__
+#pragma once
 
 #include "engine.h"
 
-DEVILUTION_BEGIN_NAMESPACE
+namespace devilution {
 
 void FreeQol();
 void InitQol();
@@ -25,8 +24,6 @@ bool IsLabelHighlighted();
 void UpdateLabelOffsets(CelOutputBuffer out, BYTE *dst, int width);
 void GenerateLabelOffsets(CelOutputBuffer out);
 void AddItemToDrawQueue(int x, int y, int id);
-void HighlightItemNames(CelOutputBuffer out);
+void ShowItemNameLabels(CelOutputBuffer out);
 
-DEVILUTION_END_NAMESPACE
-
-#endif /* __QOL_H__ */
+} // namespace devilution

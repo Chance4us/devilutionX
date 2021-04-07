@@ -3,12 +3,12 @@
  *
  * Interface of player inventory.
  */
-#ifndef __INV_H__
-#define __INV_H__
+#pragma once
 
 #include "items.h"
+#include "player.h"
 
-DEVILUTION_BEGIN_NAMESPACE
+namespace devilution {
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,6 +21,11 @@ typedef enum item_color {
 	ICOL_RED   = PAL16_RED + 5,
 	// clang-format on
 } item_color;
+
+typedef struct InvXY {
+	Sint32 X;
+	Sint32 Y;
+} InvXY;
 
 extern BOOL invflag;
 extern BOOL drawsbarflag;
@@ -35,7 +40,7 @@ void InitInv();
 void DrawInv(CelOutputBuffer out);
 
 void DrawInvBelt(CelOutputBuffer out);
-bool AutoEquipEnabled(const ItemStruct &item);
+bool AutoEquipEnabled(const PlayerStruct &player, const ItemStruct &item);
 bool AutoEquip(int playerNumber, const ItemStruct &item, bool persistItem = true);
 BOOL AutoPlace(int pnum, int ii, int sx, int sy, BOOL saveflag);
 BOOL SpecialAutoPlace(int pnum, int ii, const ItemStruct &item);
@@ -74,6 +79,4 @@ extern int AP2x2Tbl[10];
 }
 #endif
 
-DEVILUTION_END_NAMESPACE
-
-#endif /* __INV_H__ */
+}

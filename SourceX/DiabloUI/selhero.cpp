@@ -18,7 +18,7 @@
 #include "../platform/ctr/keyboard.h"
 #endif
 
-namespace dvl {
+namespace devilution {
 
 static const char *selhero_GenerateName(uint8_t hero_class);
 
@@ -30,7 +30,7 @@ char textStats[5][4];
 char title[32];
 char selhero_Lable[32];
 char selhero_Description[256];
-int selhero_result;
+_selhero_selections selhero_result;
 bool selhero_endMenu;
 bool selhero_isMultiPlayer;
 bool selhero_navigateYesNo;
@@ -136,6 +136,14 @@ void selhero_ScrollIntoView(std::size_t index)
 	}
 }
 
+BOOL SelHero_GetHeroInfo(_uiheroinfo *pInfo)
+{
+	selhero_heros[selhero_SaveCount] = *pInfo;
+	selhero_SaveCount++;
+
+	return true;
+}
+
 } // namespace
 
 void selhero_Init()
@@ -144,6 +152,10 @@ void selhero_Init()
 	UiAddBackground(&vecSelHeroDialog);
 	UiAddLogo(&vecSelHeroDialog);
 	LoadScrollBar();
+
+	selhero_SaveCount = 0;
+	gfnHeroInfo(SelHero_GetHeroInfo);
+	std::reverse(selhero_heros, selhero_heros + selhero_SaveCount);
 
 	selhero_FreeDlgItems();
 	SDL_Rect rect1 = { (Sint16)(PANEL_LEFT + 24), (Sint16)(UI_OFFSET_Y + 161), 590, 35 };
@@ -358,7 +370,7 @@ static bool shouldPrefillHeroName()
 void selhero_ClassSelector_Select(int value)
 {
 	int hClass = vecSelHeroDlgItems[value]->m_value;
-	if (gbSpawned && hClass != PC_WARRIOR && hClass != PC_MONK) {
+	if (gbSpawned && (hClass == PC_ROGUE || hClass == PC_SORCERER || (hClass == PC_BARD && !hfbard_mpq))) {
 		ArtBackground.Unload();
 		UiSelOkDialog(NULL, "The Rogue and Sorcerer are only available in the full retail version of Diablo. Visit https://www.gog.com/game/diablo to purchase.", false);
 		LoadBackgroundArt("ui_art\\selhero.pcx");
@@ -472,15 +484,7 @@ void selhero_Load_Select(int value)
 		selgame_GameSelection_Select(0);
 	}
 
-	selhero_result = 0;
-}
-
-BOOL SelHero_GetHeroInfo(_uiheroinfo *pInfo)
-{
-	selhero_heros[selhero_SaveCount] = *pInfo;
-	selhero_SaveCount++;
-
-	return true;
+	selhero_result = SELHERO_NEW_DUNGEON;
 }
 
 static void UiSelHeroDialog(
@@ -488,14 +492,12 @@ static void UiSelHeroDialog(
     BOOL (*fncreate)(_uiheroinfo *),
     void (*fnstats)(unsigned int, _uidefaultstats *),
     BOOL (*fnremove)(_uiheroinfo *),
-    int *dlgresult,
+    _selhero_selections *dlgresult,
     char (*name)[16])
 {
 	bUIElementsLoaded = true;
 
 	do {
-		selhero_Init();
-
 		gfnHeroInfo = fninfo;
 		gfnHeroCreate = fncreate;
 		gfnHeroStats = fnstats;
@@ -503,9 +505,7 @@ static void UiSelHeroDialog(
 
 		selhero_navigateYesNo = false;
 
-		selhero_SaveCount = 0;
-		gfnHeroInfo(SelHero_GetHeroInfo);
-		std::reverse(selhero_heros, selhero_heros + selhero_SaveCount);
+		selhero_Init();
 
 		if (selhero_SaveCount) {
 			selhero_List_Init();
@@ -545,7 +545,7 @@ void UiSelHeroSingDialog(
     BOOL (*fncreate)(_uiheroinfo *),
     BOOL (*fnremove)(_uiheroinfo *),
     void (*fnstats)(unsigned int, _uidefaultstats *),
-    int *dlgresult,
+    _selhero_selections *dlgresult,
     char (*name)[16],
     int *difficulty)
 {
@@ -559,8 +559,7 @@ void UiSelHeroMultDialog(
     BOOL (*fncreate)(_uiheroinfo *),
     BOOL (*fnremove)(_uiheroinfo *),
     void (*fnstats)(unsigned int, _uidefaultstats *),
-    int *dlgresult,
-    BOOL *hero_is_created,
+    _selhero_selections *dlgresult,
     char (*name)[16])
 {
 	selhero_isMultiPlayer = true;
@@ -655,4 +654,4 @@ static const char *selhero_GenerateName(uint8_t hero_class)
 	return kNames[hero_class % 6][iRand];
 }
 
-} // namespace dvl
+} // namespace devilution

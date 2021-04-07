@@ -20,7 +20,7 @@
 #endif
 #endif
 
-namespace dvl {
+namespace devilution {
 
 extern SDL_Surface *renderer_texture_surface; /** defined in dx.cpp */
 
@@ -306,4 +306,4 @@ void ScaleSurfaceToOutput(SDL_Surface **surface)
 #endif
 }
 
-} // namespace dvl
+} // namespace devilution
