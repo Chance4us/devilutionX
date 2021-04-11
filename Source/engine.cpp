@@ -142,10 +142,10 @@ void CelBlitSafeTo(CelOutputBuffer out, int sx, int sy, BYTE *pRLEBytes, int nDa
 			width = *src++;
 			if (!(width & 0x80)) {
 				i -= width;
-				if (dst < out.end() && dst > out.begin()) {
+				if (dst < out.end() && dst >= out.begin()) {
 					// GenerateLabelOffsets loops this function for all items, we don't actually want them on screen, just the min and max x position
 					if (!IsGeneratingLabels())
-						memcpy(dst, src, width);
+						memcpy(dst, src, std::min(static_cast<ptrdiff_t>(width), out.end() - dst));
 					UpdateLabelOffsets(out, dst, width);
 				}
 				src += width;
@@ -227,7 +227,7 @@ void CelBlitLightSafeTo(CelOutputBuffer out, int sx, int sy, BYTE *pRLEBytes, in
 void CelBlitLightTransSafeTo(CelOutputBuffer out, int sx, int sy, BYTE *pRLEBytes, int nDataSize, int nWidth)
 {
 	int w;
-	BOOL shift;
+	bool shift;
 	BYTE *tbl;
 
 	assert(pRLEBytes != NULL);
@@ -1079,10 +1079,10 @@ void Cl2DrawLight(CelOutputBuffer out, int sx, int sy, BYTE *pCelBuff, int nCel,
 void PlayInGameMovie(const char *pszMovie)
 {
 	PaletteFadeOut(8);
-	play_movie(pszMovie, FALSE);
+	play_movie(pszMovie, false);
 	ClearScreenBuffer();
 	force_redraw = 255;
-	scrollrt_draw_game_screen(TRUE);
+	scrollrt_draw_game_screen(true);
 	PaletteFadeIn(8);
 	force_redraw = 255;
 }
