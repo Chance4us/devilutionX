@@ -213,6 +213,9 @@ void CheckCursMove()
 	char bv;
 	bool flipflag, flipx, flipy;
 
+	if (IsLabelHighlighted())
+		return;
+
 	sx = MouseX;
 	sy = MouseY;
 
