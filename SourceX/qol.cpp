@@ -350,8 +350,7 @@ void ShowItemNameLabels(CelOutputBuffer out)
 		} while (!canShow);
 	}
 
-	for (unsigned int i = 0; i < drawQ.size(); ++i) {
-		drawingQueue t = drawQ[i];
+	for (const drawingQueue &t : drawQ) {
 
 		if (t.x < 0 || t.x >= gnScreenWidth || t.y < 0 || t.y >= gnScreenHeight)
 			continue;
