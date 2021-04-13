@@ -241,18 +241,6 @@ struct drawingQueue {
 	int itemID, row, col, x, y, width, height;
 	text_color color;
 	std::string text;
-	drawingQueue(int itemID, int row, int col, int x, int y, int width, int height, text_color color, std::string text)
-	    : itemID(itemID)
-	    , row(row)
-	    , col(col)
-	    , x(x)
-	    , y(y)
-	    , width(width)
-	    , height(height)
-	    , color(color)
-	    , text(text)
-	{
-	}
 };
 
 std::vector<drawingQueue> drawQ;
@@ -328,7 +316,7 @@ void AddItemToDrawQueue(int x, int y, int id)
 		clr = COL_BLUE;
 	if (it->_iMagical == ITEM_QUALITY_UNIQUE)
 		clr = COL_GOLD;
-	drawQ.push_back(drawingQueue(id, it->_ix, it->_iy, x, y, nameWidth, 13, clr, textOnGround));
+	drawQ.push_back(drawingQueue({ id, it->_ix, it->_iy, x, y, nameWidth, 13, clr, textOnGround }));
 }
 
 void ShowItemNameLabels(CelOutputBuffer out)
