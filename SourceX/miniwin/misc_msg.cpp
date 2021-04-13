@@ -48,27 +48,27 @@ void FocusOnCharInfo()
 
 	// Find the first incrementable stat.
 	int stat = -1;
-	for (int i = ATTRIB_VIT; i >= ATTRIB_STR; i--) {
-		int max = plr[myplr].GetMaximumAttributeValue((attribute_id)i);
+	for (auto i : enum_values<CharacterAttribute>()) {
+		int max = plr[myplr].GetMaximumAttributeValue(i);
 		switch (i) {
-		case ATTRIB_STR:
+		case CharacterAttribute::Strength:
 			if (plr[myplr]._pBaseStr >= max)
 				continue;
 			break;
-		case ATTRIB_MAG:
+		case CharacterAttribute::Magic:
 			if (plr[myplr]._pBaseMag >= max)
 				continue;
 			break;
-		case ATTRIB_DEX:
+		case CharacterAttribute::Dexterity:
 			if (plr[myplr]._pBaseDex >= max)
 				continue;
 			break;
-		case ATTRIB_VIT:
+		case CharacterAttribute::Vitality:
 			if (plr[myplr]._pBaseVit >= max)
 				continue;
 			break;
 		}
-		stat = i;
+		stat = static_cast<int>(i);
 	}
 	if (stat == -1)
 		return;

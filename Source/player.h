@@ -41,11 +41,14 @@ enum class HeroClass : uint8_t {
 	LAST = Barbarian
 };
 
-enum attribute_id : uint8_t {
-	ATTRIB_STR,
-	ATTRIB_MAG,
-	ATTRIB_DEX,
-	ATTRIB_VIT,
+enum class CharacterAttribute : uint8_t {
+	Strength,
+	Magic,
+	Dexterity,
+	Vitality,
+
+	FIRST = Strength,
+	LAST = Vitality
 };
 
 // Logical equipment locations
@@ -315,14 +318,14 @@ struct PlayerStruct {
 	 * @param attribute The attribute to retrieve the base value for
 	 * @return The base value for the requested attribute.
 	*/
-	Sint32 GetBaseAttributeValue(attribute_id attribute) const;
+	Sint32 GetBaseAttributeValue(CharacterAttribute attribute) const;
 
 	/**
 	 * @brief Gets the maximum value of the player's specified attribute.
 	 * @param attribute The attribute to retrieve the maximum value for
 	 * @return The maximum value for the requested attribute.
 	*/
-	Sint32 GetMaximumAttributeValue(attribute_id attribute) const;
+	Sint32 GetMaximumAttributeValue(CharacterAttribute attribute) const;
 };
 
 extern int myplr;
