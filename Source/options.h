@@ -93,6 +93,8 @@ struct GameplayOptions {
 	bool bRandomizeQuests;
 	/** @brief Indicates whether or not monster type (Animal, Demon, Undead) is shown along with other monster information. */
 	bool bShowMonsterType;
+	/** @brief Highlighting for Alt key. 0 = disabled, 1 = highlight when alt pressed, 2 = hide when alt pressed, 3 = always highlight */
+	Sint32 bAltHighlight;
 };
 
 struct ControllerOptions {

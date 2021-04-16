@@ -13,6 +13,7 @@
 #include "towners.h"
 #include "track.h"
 #include "trigs.h"
+#include "qol.h"
 
 namespace devilution {
 
@@ -221,6 +222,9 @@ void CheckCursMove()
 	int i, sx, sy, fx, fy, mx, my, tx, ty, px, py, xx, yy, mi, columns, rows, xo, yo;
 	char bv;
 	bool flipflag, flipx, flipy;
+
+	if (IsLabelHighlighted())
+		return;
 
 	sx = MouseX;
 	sy = MouseY;
