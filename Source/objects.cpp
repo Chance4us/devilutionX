@@ -4892,8 +4892,18 @@ bool objectIsDisabled(int i)
 	if ((object[i]._otype != OBJ_SHRINEL) && (object[i]._otype != OBJ_SHRINER))
 		return false;
 	if ((object[i]._oVar1 == SHRINE_FASCINATING)
-	    || (object[i]._oVar1 == SHRINE_ORNATE)
-	    || (object[i]._oVar1 == SHRINE_SACRED))
+		(object[i]._oVar1 == SHRINE_ORNATE) ||
+		(object[i]._oVar1 == SHRINE_SACRED) ||
+		(object[i]._oVar1 == SHRINE_HIDDEN) ||
+		(object[i]._oVar1 == SHRINE_GLOOMY) ||
+		(object[i]._oVar1 == SHRINE_HIDDEN) ||
+		(object[i]._oVar1 == SHRINE_ENCHANTED) ||
+		(object[i]._oVar1 == SHRINE_HOLY) ||
+		(object[i]._oVar1 == SHRINE_SECLUDED) ||
+		(object[i]._oVar1 == SHRINE_TAINTED) ||
+		(object[i]._oVar1 == SHRINE_GLOWING) ||
+		(object[i]._oVar1 == SHRINE_MENDICANT) ||
+		(object[i]._oVar1 == SHRINE_MURPHYS))
 		return true;
 	return false;
 }
