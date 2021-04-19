@@ -13,6 +13,7 @@
 #include "towners.h"
 #include "track.h"
 #include "trigs.h"
+#include "qol/itemlabels.h"
 
 namespace devilution {
 
@@ -119,9 +120,9 @@ const int InvItemHeight[] = {
 void InitCursor()
 {
 	assert(!pCursCels);
-	pCursCels = LoadFileInMem("Data\\Inv\\Objcurs.CEL", NULL);
+	pCursCels = LoadFileInMem("Data\\Inv\\Objcurs.CEL", nullptr);
 	if (gbIsHellfire)
-		pCursCels2 = LoadFileInMem("Data\\Inv\\Objcurs2.CEL", NULL);
+		pCursCels2 = LoadFileInMem("Data\\Inv\\Objcurs2.CEL", nullptr);
 	ClearCursor();
 }
 
@@ -221,6 +222,9 @@ void CheckCursMove()
 	int i, sx, sy, fx, fy, mx, my, tx, ty, px, py, xx, yy, mi, columns, rows, xo, yo;
 	int8_t bv;
 	bool flipflag, flipx, flipy;
+
+	if (IsItemLabelHighlighted())
+		return;
 
 	sx = MouseX;
 	sy = MouseY;
@@ -514,7 +518,7 @@ void CheckCursMove()
 			cursmx = mx + 1;
 			cursmy = my + 1;
 		}
-		if (pcursmonst != -1 && !towner[pcursmonst]._tSelFlag) {
+		if (pcursmonst != -1 && !towners[pcursmonst]._tSelFlag) {
 			pcursmonst = -1;
 		}
 	}

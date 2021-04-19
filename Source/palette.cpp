@@ -127,7 +127,7 @@ void LoadPalette(const char *pszFileName)
 	assert(pszFileName);
 
 	SFileOpenFile(pszFileName, &pBuf);
-	SFileReadFile(pBuf, (char *)PalData, sizeof(PalData), NULL, NULL);
+	SFileReadFile(pBuf, (char *)PalData, sizeof(PalData), nullptr, nullptr);
 	SFileCloseFile(pBuf);
 
 	for (i = 0; i < 256; i++) {
@@ -235,7 +235,7 @@ void PaletteFadeIn(int fr)
 	for (i = 0; i < 256; i = (SDL_GetTicks() - tc) / 2.083) { // 32 frames @ 60hz
 		SetFadeLevel(i);
 		SDL_Rect SrcRect = { BUFFER_BORDER_LEFT, BUFFER_BORDER_TOP, gnScreenWidth, gnScreenHeight };
-		BltFast(&SrcRect, NULL);
+		BltFast(&SrcRect, nullptr);
 		RenderPresent();
 	}
 	SetFadeLevel(256);
@@ -252,7 +252,7 @@ void PaletteFadeOut(int fr)
 		for (i = 256; i > 0; i = 256 - (SDL_GetTicks() - tc) / 2.083) { // 32 frames @ 60hz
 			SetFadeLevel(i);
 			SDL_Rect SrcRect = { BUFFER_BORDER_LEFT, BUFFER_BORDER_TOP, gnScreenWidth, gnScreenHeight };
-			BltFast(&SrcRect, NULL);
+			BltFast(&SrcRect, nullptr);
 			RenderPresent();
 		}
 		SetFadeLevel(0);
@@ -276,12 +276,12 @@ static void CycleColors(int from, int to)
 	if (!sgOptions.Graphics.bBlendedTransparancy)
 		return;
 
-	for (int i = 0; i < 256; i++) {
-		Uint8 col = paletteTransparencyLookup[i][from];
+	for (auto &palette : paletteTransparencyLookup) {
+		Uint8 col = palette[from];
 		for (int j = from; j < to; j++) {
-			paletteTransparencyLookup[i][j] = paletteTransparencyLookup[i][j + 1];
+			palette[j] = palette[j + 1];
 		}
-		paletteTransparencyLookup[i][to] = col;
+		palette[to] = col;
 	}
 
 	Uint8 colRow[256];
@@ -308,12 +308,12 @@ static void CycleColorsReverse(int from, int to)
 	if (!sgOptions.Graphics.bBlendedTransparancy)
 		return;
 
-	for (int i = 0; i < 256; i++) {
-		Uint8 col = paletteTransparencyLookup[i][to];
+	for (auto &palette : paletteTransparencyLookup) {
+		Uint8 col = palette[to];
 		for (int j = to; j > from; j--) {
-			paletteTransparencyLookup[i][j] = paletteTransparencyLookup[i][j - 1];
+			palette[j] = palette[j - 1];
 		}
-		paletteTransparencyLookup[i][from] = col;
+		palette[from] = col;
 	}
 
 	Uint8 colRow[256];

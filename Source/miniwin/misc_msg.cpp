@@ -1,6 +1,6 @@
+#include <SDL.h>
 #include <cstdint>
 #include <deque>
-#include <SDL.h>
 
 #include "control.h"
 #include "controls/controller.h"
@@ -51,9 +51,9 @@ void FocusOnCharInfo()
 
 	// Find the first incrementable stat.
 	int stat = -1;
-	for (auto i : enum_values<CharacterAttribute>()) {
-		int max = plr[myplr].GetMaximumAttributeValue(i);
-		switch (i) {
+	for (auto attribute : enum_values<CharacterAttribute>()) {
+		int max = plr[myplr].GetMaximumAttributeValue(attribute);
+		switch (attribute) {
 		case CharacterAttribute::Strength:
 			if (plr[myplr]._pBaseStr >= max)
 				continue;
@@ -71,7 +71,7 @@ void FocusOnCharInfo()
 				continue;
 			break;
 		}
-		stat = static_cast<int>(i);
+		stat = static_cast<int>(attribute);
 	}
 	if (stat == -1)
 		return;
@@ -688,9 +688,9 @@ bool TranslateMessage(const MSG *lpMsg)
 SHORT GetAsyncKeyState(int vKey)
 {
 	if (vKey == DVL_MK_LBUTTON)
-		return SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT);
+		return SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(SDL_BUTTON_LEFT);
 	if (vKey == DVL_MK_RBUTTON)
-		return SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT);
+		return SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(SDL_BUTTON_RIGHT);
 	const Uint8 *state = SDLC_GetKeyState();
 	switch (vKey) {
 	case DVL_VK_CONTROL:

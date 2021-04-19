@@ -1,8 +1,8 @@
 #include "selyesno.h"
 
-#include "control.h"
 #include "DiabloUI/diabloui.h"
 #include "DiabloUI/text.h"
+#include "control.h"
 
 namespace devilution {
 namespace {
@@ -20,15 +20,12 @@ void selyesno_Free()
 {
 	ArtBackground.Unload();
 
-	for (std::size_t i = 0; i < vecSelYesNoDialogItems.size(); i++) {
-		UiListItem *pUIListItem = vecSelYesNoDialogItems[i];
-		if (pUIListItem)
-			delete pUIListItem;
+	for (auto pUIListItem : vecSelYesNoDialogItems) {
+		delete pUIListItem;
 	}
 	vecSelYesNoDialogItems.clear();
 
-	for (std::size_t i = 0; i < vecSelYesNoDialog.size(); i++) {
-		UiItemBase *pUIItem = vecSelYesNoDialog[i];
+	for (auto pUIItem : vecSelYesNoDialog) {
 		delete pUIItem;
 	}
 	vecSelYesNoDialog.clear();
@@ -67,7 +64,7 @@ bool UiSelHeroYesNoDialog(const char *title, const char *body)
 	strncpy(selyesno_confirmationMessage, body, sizeof(selyesno_confirmationMessage) - 1);
 	WordWrapArtStr(selyesno_confirmationMessage, MESSAGE_WIDTH);
 
-	UiInitList(vecSelYesNoDialogItems.size(), NULL, selyesno_Select, selyesno_Esc, vecSelYesNoDialog, true, NULL);
+	UiInitList(vecSelYesNoDialogItems.size(), nullptr, selyesno_Select, selyesno_Esc, vecSelYesNoDialog, true, nullptr);
 
 	selyesno_value = true;
 	selyesno_endMenu = false;

@@ -4,13 +4,13 @@
 #include <chrono>
 #include <random>
 
-#include "control.h"
 #include "DiabloUI/diabloui.h"
 #include "DiabloUI/dialogs.h"
 #include "DiabloUI/scrollbar.h"
 #include "DiabloUI/selgame.h"
 #include "DiabloUI/selok.h"
 #include "DiabloUI/selyesno.h"
+#include "control.h"
 #include "options.h"
 #include "pfile.h"
 
@@ -67,8 +67,7 @@ void selhero_UiFocusNavigationYesNo()
 
 void selhero_FreeListItems()
 {
-	for (std::size_t i = 0; i < vecSelHeroDlgItems.size(); i++) {
-		UiListItem *pUIItem = vecSelHeroDlgItems[i];
+	for (auto pUIItem : vecSelHeroDlgItems) {
 		delete pUIItem;
 	}
 	vecSelHeroDlgItems.clear();
@@ -76,8 +75,7 @@ void selhero_FreeListItems()
 
 void selhero_FreeDlgItems()
 {
-	for (std::size_t i = 0; i < vecSelDlgItems.size(); i++) {
-		UiItemBase *pUIItem = vecSelDlgItems[i];
+	for (auto pUIItem : vecSelDlgItems) {
 		delete pUIItem;
 	}
 	vecSelDlgItems.clear();
@@ -87,8 +85,7 @@ void selhero_Free()
 {
 	ArtBackground.Unload();
 
-	for (std::size_t i = 0; i < vecSelHeroDialog.size(); i++) {
-		UiItemBase *pUIItem = vecSelHeroDialog[i];
+	for (auto pUIItem : vecSelHeroDialog) {
 		delete pUIItem;
 	}
 	vecSelHeroDialog.clear();
@@ -150,7 +147,7 @@ bool SelHero_GetHeroInfo(_uiheroinfo *pInfo)
 
 void selhero_List_Focus(int value)
 {
-	const std::size_t index = static_cast<std::size_t>(value);
+	const auto index = static_cast<std::size_t>(value);
 	selhero_ScrollIntoView(index);
 	int baseFlags = UIS_CENTER | UIS_BIG;
 	if (selhero_SaveCount && index < selhero_SaveCount) {
@@ -286,7 +283,7 @@ void selhero_ClassSelector_Select(int value)
 	auto hClass = static_cast<HeroClass>(vecSelHeroDlgItems[value]->m_value);
 	if (gbSpawned && (hClass == HeroClass::Rogue || hClass == HeroClass::Sorcerer || (hClass == HeroClass::Bard && !hfbard_mpq))) {
 		ArtBackground.Unload();
-		UiSelOkDialog(NULL, "The Rogue and Sorcerer are only available in the full retail version of Diablo. Visit https://www.gog.com/game/diablo to purchase.", false);
+		UiSelOkDialog(nullptr, "The Rogue and Sorcerer are only available in the full retail version of Diablo. Visit https://www.gog.com/game/diablo to purchase.", false);
 		LoadBackgroundArt("ui_art\\selhero.pcx");
 		selhero_List_Select(selhero_SaveCount);
 		return;
@@ -315,7 +312,7 @@ void selhero_ClassSelector_Select(int value)
 	SDL_Rect rect4 = { (Sint16)(PANEL_LEFT + 429), (Sint16)(UI_OFFSET_Y + 429), 140, 35 };
 	vecSelDlgItems.push_back(new UiArtTextButton("Cancel", &UiFocusNavigationEsc, rect4, UIS_CENTER | UIS_BIG | UIS_GOLD));
 
-	UiInitList(0, NULL, selhero_Name_Select, selhero_Name_Esc, vecSelDlgItems);
+	UiInitList(0, nullptr, selhero_Name_Select, selhero_Name_Esc, vecSelDlgItems);
 }
 
 void selhero_ClassSelector_Esc()
@@ -557,7 +554,7 @@ void selhero_List_Init()
 	vecSelDlgItems.push_back(new UiList(vecSelHeroDlgItems, PANEL_LEFT + 265, (UI_OFFSET_Y + 256), 320, 26, UIS_CENTER | UIS_MED | UIS_GOLD));
 
 	SDL_Rect rect2 = { (Sint16)(PANEL_LEFT + 585), (Sint16)(UI_OFFSET_Y + 244), 25, 178 };
-	UiScrollBar *scrollBar = new UiScrollBar(&ArtScrollBarBackground, &ArtScrollBarThumb, &ArtScrollBarArrow, rect2);
+	auto *scrollBar = new UiScrollBar(&ArtScrollBarBackground, &ArtScrollBarThumb, &ArtScrollBarArrow, rect2);
 	vecSelDlgItems.push_back(scrollBar);
 
 	SDL_Rect rect3 = { (Sint16)(PANEL_LEFT + 239), (Sint16)(UI_OFFSET_Y + 429), 120, 35 };

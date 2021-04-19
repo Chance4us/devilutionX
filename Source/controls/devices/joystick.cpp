@@ -203,7 +203,7 @@ bool Joystick::IsHatButtonPressed(ControllerButton button) const
 
 bool Joystick::IsPressed(ControllerButton button) const
 {
-	if (sdl_joystick_ == NULL)
+	if (sdl_joystick_ == nullptr)
 		return false;
 	if (IsHatButtonPressed(button))
 		return true;
@@ -254,7 +254,7 @@ void Joystick::Add(int device_index)
 	SDL_Log("Adding joystick %d: %s", device_index,
 	    SDL_JoystickNameForIndex(device_index));
 	result.sdl_joystick_ = SDL_JoystickOpen(device_index);
-	if (result.sdl_joystick_ == NULL) {
+	if (result.sdl_joystick_ == nullptr) {
 		SDL_Log("%s", SDL_GetError());
 		SDL_ClearError();
 		return;
@@ -289,12 +289,11 @@ const std::vector<Joystick> &Joystick::All()
 
 Joystick *Joystick::Get(SDL_JoystickID instance_id)
 {
-	for (std::size_t i = 0; i < joysticks_->size(); ++i) {
-		Joystick &joystick = (*joysticks_)[i];
+	for (auto &joystick : *joysticks_) {
 		if (joystick.instance_id_ == instance_id)
 			return &joystick;
 	}
-	return NULL;
+	return nullptr;
 }
 
 Joystick *Joystick::Get(const SDL_Event &event)
@@ -312,7 +311,7 @@ Joystick *Joystick::Get(const SDL_Event &event)
 		return Get(event.jbutton.which);
 		return Get(event.jbutton.which);
 	default:
-		return NULL;
+		return nullptr;
 #else
 	case SDL_JOYAXISMOTION:
 	case SDL_JOYBALLMOTION:
@@ -328,8 +327,8 @@ Joystick *Joystick::Get(const SDL_Event &event)
 
 bool Joystick::IsPressedOnAnyJoystick(ControllerButton button)
 {
-	for (std::size_t i = 0; i < joysticks_->size(); ++i)
-		if ((*joysticks_)[i].IsPressed(button))
+	for (auto &joystick : *joysticks_)
+		if (joystick.IsPressed(button))
 			return true;
 	return false;
 }

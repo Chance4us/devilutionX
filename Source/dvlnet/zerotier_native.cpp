@@ -1,7 +1,7 @@
 #include "dvlnet/zerotier_native.h"
 
-#include <atomic>
 #include <SDL.h>
+#include <atomic>
 
 #ifdef USE_SDL1
 #include "utils/sdl2_to_1_2_backports.h"
@@ -9,15 +9,14 @@
 #include "utils/sdl2_backports.h"
 #endif
 
-#include <cstdlib>
 #include <ZeroTierSockets.h>
+#include <cstdlib>
 
 #include "utils/paths.h"
 
 #include "dvlnet/zerotier_lwip.h"
 
-namespace devilution {
-namespace net {
+namespace devilution::net {
 
 //static constexpr uint64_t zt_earth = 0x8056c2e21c000001;
 static constexpr uint64_t zt_network = 0xaf78bf943649eb12;
@@ -67,5 +66,4 @@ void zerotier_network_start()
 	std::atexit(zerotier_network_stop);
 }
 
-} // namespace net
-} // namespace devilution
+} // namespace devilution::net

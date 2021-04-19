@@ -8,7 +8,7 @@ DEBUG_OPTION(ASAN "Enable address sanitizer")
 DEBUG_OPTION(UBSAN "Enable undefined behaviour sanitizer")
 DEBUG_OPTION(DEBUG "Enable debug mode in engine")
 option(GPERF "Build with GPerfTools profiler" OFF)
-option(DISABLE_LTO "Disable link-time optimization (by default enabled in release mode)" OFF)
+option(DISABLE_LTO "Disable link-time optimization (by default enabled in release mode)" ON)
 option(PIE "Generate position-independent code" OFF)
 option(DIST "Dynamically link only glibc and SDL2" OFF)
 option(BINARY_RELEASE "Enable options for binary release" OFF)
@@ -296,6 +296,7 @@ set(devilutionx_SRCS
   Source/controls/touch.cpp
   Source/qol/common.cpp
   Source/qol/xpbar.cpp
+  Source/qol/itemlabels.cpp
   Source/utils/console.cpp
   Source/utils/display.cpp
   Source/utils/file_util.cpp

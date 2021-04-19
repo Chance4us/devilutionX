@@ -45,12 +45,13 @@
 #include "stores.h"
 #include "storm/storm.h"
 #include "themes.h"
-#include "towners.h"
 #include "town.h"
+#include "towners.h"
 #include "track.h"
 #include "trigs.h"
 #include "utils/console.h"
 #include "utils/paths.h"
+#include "qol/itemlabels.h"
 
 namespace devilution {
 
@@ -975,6 +976,10 @@ static void ReleaseKey(int vkey)
 {
 	if (vkey == DVL_VK_SNAPSHOT)
 		CaptureScreen();
+	if (vkey == DVL_VK_MENU || vkey == DVL_VK_LMENU || vkey == DVL_VK_RMENU)
+		AltPressed(false);
+	if (vkey == DVL_VK_CONTROL || vkey == DVL_VK_LCONTROL || vkey == DVL_VK_RCONTROL)
+		ToggleItemLabelHighlight();
 }
 
 static void ClosePanels()
@@ -1050,6 +1055,9 @@ static void PressKey(int vkey)
 	if (gmenu_presskeys(vkey) || control_presskeys(vkey)) {
 		return;
 	}
+
+	if (vkey == DVL_VK_MENU || vkey == DVL_VK_LMENU || vkey == DVL_VK_RMENU)
+		AltPressed(true);
 
 	if (deathflag) {
 		if (sgnTimeoutCurs != CURSOR_NONE) {
@@ -1492,7 +1500,7 @@ static void PressChar(WPARAM vkey)
 		return;
 	case 'a':
 		if (debug_mode_key_inverted_v) {
-			spelldata[SPL_TELEPORT].sTownSpell = 1;
+			spelldata[SPL_TELEPORT].sTownSpell = true;
 			plr[myplr]._pSplLvl[plr[myplr]._pSpell]++;
 		}
 		return;
@@ -1683,52 +1691,52 @@ void LoadLvlGFX()
 	switch (leveltype) {
 	case DTYPE_TOWN:
 		if (gbIsHellfire) {
-			pDungeonCels = LoadFileInMem("NLevels\\TownData\\Town.CEL", NULL);
-			pMegaTiles = LoadFileInMem("NLevels\\TownData\\Town.TIL", NULL);
-			pLevelPieces = LoadFileInMem("NLevels\\TownData\\Town.MIN", NULL);
+			pDungeonCels = LoadFileInMem("NLevels\\TownData\\Town.CEL", nullptr);
+			pMegaTiles = LoadFileInMem("NLevels\\TownData\\Town.TIL", nullptr);
+			pLevelPieces = LoadFileInMem("NLevels\\TownData\\Town.MIN", nullptr);
 		} else {
-			pDungeonCels = LoadFileInMem("Levels\\TownData\\Town.CEL", NULL);
-			pMegaTiles = LoadFileInMem("Levels\\TownData\\Town.TIL", NULL);
-			pLevelPieces = LoadFileInMem("Levels\\TownData\\Town.MIN", NULL);
+			pDungeonCels = LoadFileInMem("Levels\\TownData\\Town.CEL", nullptr);
+			pMegaTiles = LoadFileInMem("Levels\\TownData\\Town.TIL", nullptr);
+			pLevelPieces = LoadFileInMem("Levels\\TownData\\Town.MIN", nullptr);
 		}
-		pSpecialCels = LoadFileInMem("Levels\\TownData\\TownS.CEL", NULL);
+		pSpecialCels = LoadFileInMem("Levels\\TownData\\TownS.CEL", nullptr);
 		break;
 	case DTYPE_CATHEDRAL:
 		if (currlevel < 21) {
-			pDungeonCels = LoadFileInMem("Levels\\L1Data\\L1.CEL", NULL);
-			pMegaTiles = LoadFileInMem("Levels\\L1Data\\L1.TIL", NULL);
-			pLevelPieces = LoadFileInMem("Levels\\L1Data\\L1.MIN", NULL);
-			pSpecialCels = LoadFileInMem("Levels\\L1Data\\L1S.CEL", NULL);
+			pDungeonCels = LoadFileInMem("Levels\\L1Data\\L1.CEL", nullptr);
+			pMegaTiles = LoadFileInMem("Levels\\L1Data\\L1.TIL", nullptr);
+			pLevelPieces = LoadFileInMem("Levels\\L1Data\\L1.MIN", nullptr);
+			pSpecialCels = LoadFileInMem("Levels\\L1Data\\L1S.CEL", nullptr);
 		} else {
-			pDungeonCels = LoadFileInMem("NLevels\\L5Data\\L5.CEL", NULL);
-			pMegaTiles = LoadFileInMem("NLevels\\L5Data\\L5.TIL", NULL);
-			pLevelPieces = LoadFileInMem("NLevels\\L5Data\\L5.MIN", NULL);
-			pSpecialCels = LoadFileInMem("NLevels\\L5Data\\L5S.CEL", NULL);
+			pDungeonCels = LoadFileInMem("NLevels\\L5Data\\L5.CEL", nullptr);
+			pMegaTiles = LoadFileInMem("NLevels\\L5Data\\L5.TIL", nullptr);
+			pLevelPieces = LoadFileInMem("NLevels\\L5Data\\L5.MIN", nullptr);
+			pSpecialCels = LoadFileInMem("NLevels\\L5Data\\L5S.CEL", nullptr);
 		}
 		break;
 	case DTYPE_CATACOMBS:
-		pDungeonCels = LoadFileInMem("Levels\\L2Data\\L2.CEL", NULL);
-		pMegaTiles = LoadFileInMem("Levels\\L2Data\\L2.TIL", NULL);
-		pLevelPieces = LoadFileInMem("Levels\\L2Data\\L2.MIN", NULL);
-		pSpecialCels = LoadFileInMem("Levels\\L2Data\\L2S.CEL", NULL);
+		pDungeonCels = LoadFileInMem("Levels\\L2Data\\L2.CEL", nullptr);
+		pMegaTiles = LoadFileInMem("Levels\\L2Data\\L2.TIL", nullptr);
+		pLevelPieces = LoadFileInMem("Levels\\L2Data\\L2.MIN", nullptr);
+		pSpecialCels = LoadFileInMem("Levels\\L2Data\\L2S.CEL", nullptr);
 		break;
 	case DTYPE_CAVES:
 		if (currlevel < 17) {
-			pDungeonCels = LoadFileInMem("Levels\\L3Data\\L3.CEL", NULL);
-			pMegaTiles = LoadFileInMem("Levels\\L3Data\\L3.TIL", NULL);
-			pLevelPieces = LoadFileInMem("Levels\\L3Data\\L3.MIN", NULL);
+			pDungeonCels = LoadFileInMem("Levels\\L3Data\\L3.CEL", nullptr);
+			pMegaTiles = LoadFileInMem("Levels\\L3Data\\L3.TIL", nullptr);
+			pLevelPieces = LoadFileInMem("Levels\\L3Data\\L3.MIN", nullptr);
 		} else {
-			pDungeonCels = LoadFileInMem("NLevels\\L6Data\\L6.CEL", NULL);
-			pMegaTiles = LoadFileInMem("NLevels\\L6Data\\L6.TIL", NULL);
-			pLevelPieces = LoadFileInMem("NLevels\\L6Data\\L6.MIN", NULL);
+			pDungeonCels = LoadFileInMem("NLevels\\L6Data\\L6.CEL", nullptr);
+			pMegaTiles = LoadFileInMem("NLevels\\L6Data\\L6.TIL", nullptr);
+			pLevelPieces = LoadFileInMem("NLevels\\L6Data\\L6.MIN", nullptr);
 		}
-		pSpecialCels = LoadFileInMem("Levels\\L1Data\\L1S.CEL", NULL);
+		pSpecialCels = LoadFileInMem("Levels\\L1Data\\L1S.CEL", nullptr);
 		break;
 	case DTYPE_HELL:
-		pDungeonCels = LoadFileInMem("Levels\\L4Data\\L4.CEL", NULL);
-		pMegaTiles = LoadFileInMem("Levels\\L4Data\\L4.TIL", NULL);
-		pLevelPieces = LoadFileInMem("Levels\\L4Data\\L4.MIN", NULL);
-		pSpecialCels = LoadFileInMem("Levels\\L2Data\\L2S.CEL", NULL);
+		pDungeonCels = LoadFileInMem("Levels\\L4Data\\L4.CEL", nullptr);
+		pMegaTiles = LoadFileInMem("Levels\\L4Data\\L4.TIL", nullptr);
+		pLevelPieces = LoadFileInMem("Levels\\L4Data\\L4.MIN", nullptr);
+		pSpecialCels = LoadFileInMem("Levels\\L2Data\\L2S.CEL", nullptr);
 		break;
 	default:
 		app_fatal("LoadLvlGFX");

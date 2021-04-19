@@ -411,12 +411,12 @@ int multi_handle_delta()
 	sgbTimeout = false;
 	if (received) {
 		if (!gbShouldValidatePackage) {
-			NetSendHiPri(myplr, 0, 0);
+			NetSendHiPri(myplr, nullptr, 0);
 			gbShouldValidatePackage = false;
 		} else {
 			gbShouldValidatePackage = false;
 			if (!multi_check_pkt_valid(&sgHiPriBuf))
-				NetSendHiPri(myplr, 0, 0);
+				NetSendHiPri(myplr, nullptr, 0);
 		}
 	}
 	multi_mon_seeds();
@@ -657,7 +657,7 @@ static bool multi_upgrade(bool *pfExitProgram)
 				DrawDlg("Network upgrade failed");
 			}
 		} else {
-			*pfExitProgram = 1;
+			*pfExitProgram = true;
 		}
 
 		result = false;
@@ -672,7 +672,7 @@ static void multi_handle_events(_SNETEVENT *pEvt)
 
 	switch (pEvt->eventid) {
 	case EVENT_TYPE_PLAYER_CREATE_GAME: {
-		GameData *gameData = (GameData *)pEvt->data;
+		auto *gameData = (GameData *)pEvt->data;
 		if (gameData->size != sizeof(GameData))
 			app_fatal("Invalid size of game data: %d", gameData->size);
 		sgGameInitInfo = *gameData;
@@ -737,11 +737,11 @@ void NetClose()
 
 bool NetInit(bool bSinglePlayer, bool *pfExitProgram)
 {
-	while (1) {
+	while (true) {
 		*pfExitProgram = false;
 		SetRndSeed(0);
 		sgGameInitInfo.size = sizeof(sgGameInitInfo);
-		sgGameInitInfo.dwSeed = time(NULL);
+		sgGameInitInfo.dwSeed = time(nullptr);
 		sgGameInitInfo.programid = GAME_ID;
 		sgGameInitInfo.versionMajor = PROJECT_VERSION_MAJOR;
 		sgGameInitInfo.versionMinor = PROJECT_VERSION_MINOR;

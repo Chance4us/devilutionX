@@ -1,6 +1,6 @@
+#include "DiabloUI/diabloui.h"
 #include "control.h"
 #include "controls/menu_controls.h"
-#include "DiabloUI/diabloui.h"
 
 namespace devilution {
 namespace {
@@ -24,8 +24,7 @@ void title_Free()
 	ArtBackgroundWidescreen.Unload();
 	ArtLogos[LOGO_BIG].Unload();
 
-	for (std::size_t i = 0; i < vecTitleScreen.size(); i++) {
-		UiItemBase *pUIItem = vecTitleScreen[i];
+	for (auto pUIItem : vecTitleScreen) {
 		delete pUIItem;
 	}
 	vecTitleScreen.clear();

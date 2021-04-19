@@ -1,24 +1,24 @@
 #include "dvlnet/tcp_client.h"
 #include "options.h"
 
-#include <functional>
-#include <exception>
-#include <sstream>
-#include <system_error>
-#include <stdexcept>
-#include <sodium.h>
 #include <SDL.h>
+#include <exception>
+#include <functional>
+#include <memory>
+#include <sodium.h>
+#include <sstream>
+#include <stdexcept>
+#include <system_error>
 
 #include <asio/connect.hpp>
 
-namespace devilution {
-namespace net {
+namespace devilution::net {
 
 int tcp_client::create(std::string addrstr, std::string passwd)
 {
 	try {
 		auto port = sgOptions.Network.nPort;
-		local_server.reset(new tcp_server(ioc, addrstr, port, passwd));
+		local_server = std::make_unique<tcp_server>(ioc, addrstr, port, passwd);
 		return join(local_server->localhost_self(), passwd);
 	} catch (std::system_error &e) {
 		SDL_SetError("%s", e.what());
@@ -122,7 +122,7 @@ bool tcp_client::SNetLeaveGame(int type)
 {
 	auto ret = base::SNetLeaveGame(type);
 	poll();
-	if (local_server != NULL)
+	if (local_server != nullptr)
 		local_server->close();
 	return ret;
 }
@@ -136,5 +136,4 @@ tcp_client::~tcp_client()
 {
 }
 
-} // namespace net
-} // namespace devilution
+} // namespace devilution::net

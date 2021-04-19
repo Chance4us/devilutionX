@@ -14,6 +14,8 @@ namespace devilution {
 
 #define MAXITEMS 127
 
+#define ITEMTYPES 43
+
 #define GOLD_SMALL_LIMIT 1000
 #define GOLD_MEDIUM_LIMIT 2500
 #define GOLD_MAX_LIMIT 5000
@@ -368,7 +370,7 @@ extern bool uitemflag;
 extern int itemavail[MAXITEMS];
 extern ItemStruct items[MAXITEMS + 1];
 extern CornerStoneStruct CornerStone;
-extern bool UniqueItemFlag[128];
+extern bool UniqueItemFlags[128];
 extern int numitems;
 
 BYTE GetOutlineColor(ItemStruct &item, bool checkReq);

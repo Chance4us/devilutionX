@@ -25,6 +25,7 @@
 #include "plrmsg.h"
 #include "qol.h"
 #include "qol/xpbar.h"
+#include "qol/itemlabels.h"
 #include "render.h"
 #include "stores.h"
 #include "towners.h"
@@ -254,7 +255,7 @@ void DrawMissilePrivate(CelOutputBuffer out, MissileStruct *m, int sx, int sy, b
 		return;
 
 	BYTE *pCelBuff = m->_miAnimData;
-	if (pCelBuff == NULL) {
+	if (pCelBuff == nullptr) {
 		SDL_Log("Draw Missile 2 type %d: NULL Cel Buffer", m->_mitype);
 		return;
 	}
@@ -323,7 +324,7 @@ static void DrawMonster(CelOutputBuffer out, int x, int y, int mx, int my, int m
 	}
 
 	BYTE *pCelBuff = monster[m]._mAnimData;
-	if (pCelBuff == NULL) {
+	if (pCelBuff == nullptr) {
 		SDL_Log("Draw Monster \"%s\": NULL Cel Buffer", monster[m].mName);
 		return;
 	}
@@ -417,7 +418,7 @@ static void DrawPlayer(CelOutputBuffer out, int pnum, int x, int y, int px, int 
 	int nCel = GetFrameToUseForPlayerRendering(pPlayer);
 	int nWidth = pPlayer->_pAnimWidth;
 
-	if (pCelBuff == NULL) {
+	if (pCelBuff == nullptr) {
 		SDL_Log("Drawing player %d \"%s\": NULL Cel Buffer", pnum, plr[pnum]._pName);
 		return;
 	}
@@ -526,7 +527,7 @@ static void DrawObject(CelOutputBuffer out, int x, int y, int ox, int oy, bool p
 	assert(bv >= 0 && bv < MAXOBJECTS);
 
 	BYTE *pCelBuff = object[bv]._oAnimData;
-	if (pCelBuff == NULL) {
+	if (pCelBuff == nullptr) {
 		SDL_Log("Draw Object type %d: NULL Cel Buffer", object[bv]._otype);
 		return;
 	}
@@ -625,7 +626,7 @@ static void DrawItem(CelOutputBuffer out, int x, int y, int sx, int sy, bool pre
 		return;
 
 	BYTE *pCelBuff = pItem->_iAnimData;
-	if (pCelBuff == NULL) {
+	if (pCelBuff == nullptr) {
 		SDL_Log("Draw Item \"%s\" 1: NULL Cel Buffer", pItem->_iIName);
 		return;
 	}
@@ -642,6 +643,8 @@ static void DrawItem(CelOutputBuffer out, int x, int y, int sx, int sy, bool pre
 		CelBlitOutlineTo(out, GetOutlineColor(*pItem, false), px, sy, pCelBuff, nCel, pItem->_iAnimWidth);
 	}
 	CelClippedDrawLightTo(out, px, sy, pCelBuff, nCel, pItem->_iAnimWidth);
+	if (pItem->_iAnimFrame == pItem->_iAnimLen)
+		AddItemToLabelQueue(sx, sy, bItem - 1);
 }
 
 /**
@@ -662,12 +665,12 @@ static void DrawMonsterHelper(CelOutputBuffer out, int x, int y, int oy, int sx,
 	mi = mi > 0 ? mi - 1 : -(mi + 1);
 
 	if (leveltype == DTYPE_TOWN) {
-		px = sx - towner[mi]._tAnimWidth2;
+		px = sx - towners[mi]._tAnimWidth2;
 		if (mi == pcursmonst) {
-			CelBlitOutlineTo(out, 166, px, sy, towner[mi]._tAnimData, towner[mi]._tAnimFrame, towner[mi]._tAnimWidth);
+			CelBlitOutlineTo(out, 166, px, sy, towners[mi]._tAnimData, towners[mi]._tAnimFrame, towners[mi]._tAnimWidth);
 		}
-		assert(towner[mi]._tAnimData);
-		CelClippedDrawTo(out, px, sy, towner[mi]._tAnimData, towner[mi]._tAnimFrame, towner[mi]._tAnimWidth);
+		assert(towners[mi]._tAnimData);
+		CelClippedDrawTo(out, px, sy, towners[mi]._tAnimData, towners[mi]._tAnimFrame, towners[mi]._tAnimWidth);
 		return;
 	}
 
@@ -684,7 +687,7 @@ static void DrawMonsterHelper(CelOutputBuffer out, int x, int y, int oy, int sx,
 		return;
 	}
 
-	if (pMonster->MType == NULL) {
+	if (pMonster->MType == nullptr) {
 		SDL_Log("Draw Monster \"%s\": uninitialized monster", pMonster->mName);
 		return;
 	}
@@ -739,6 +742,8 @@ static void scrollrt_draw_dungeon(CelOutputBuffer out, int sx, int sy, int dx, i
 		return;
 	dRendered[sx][sy] = true;
 
+	GenerateItemLabelOffsets(out);
+
 	light_table_index = dLight[sx][sy];
 
 	drawCell(out, sx, sy, dx, dy);
@@ -764,11 +769,11 @@ static void scrollrt_draw_dungeon(CelOutputBuffer out, int sx, int sy, int dx, i
 	if (light_table_index < lightmax && bDead != 0) {
 		do {
 			DeadStruct *pDeadGuy = &dead[(bDead & 0x1F) - 1];
-			direction dd = static_cast<direction>((bDead >> 5) & 7);
+			auto dd = static_cast<direction>((bDead >> 5) & 7);
 			int px = dx - pDeadGuy->_deadWidth2;
 			BYTE *pCelBuff = pDeadGuy->_deadData[dd];
-			assert(pCelBuff != NULL);
-			if (pCelBuff == NULL)
+			assert(pCelBuff != nullptr);
+			if (pCelBuff == nullptr)
 				break;
 			int frames = SDL_SwapLE32(*(DWORD *)pCelBuff);
 			int nCel = pDeadGuy->_deadFrame;
@@ -781,10 +786,10 @@ static void scrollrt_draw_dungeon(CelOutputBuffer out, int sx, int sy, int dx, i
 			} else {
 				Cl2DrawLight(out, px, dy, pCelBuff, nCel, pDeadGuy->_deadWidth);
 			}
-		} while (0);
+		} while (false);
 	}
-	DrawObject(out, sx, sy, dx, dy, 1);
-	DrawItem(out, sx, sy, dx, dy, 1);
+	DrawObject(out, sx, sy, dx, dy, true);
+	DrawItem(out, sx, sy, dx, dy, true);
 	if (bFlag & BFLAG_PLAYERLR) {
 		assert((DWORD)(sy - 1) < MAXDUNY);
 		DrawPlayerHelper(out, sx, sy - 1, dx, dy);
@@ -802,8 +807,8 @@ static void scrollrt_draw_dungeon(CelOutputBuffer out, int sx, int sy, int dx, i
 		DrawMonsterHelper(out, sx, sy, 0, dx, dy);
 	}
 	DrawMissile(out, sx, sy, dx, dy, false);
-	DrawObject(out, sx, sy, dx, dy, 0);
-	DrawItem(out, sx, sy, dx, dy, 0);
+	DrawObject(out, sx, sy, dx, dy, false);
+	DrawItem(out, sx, sy, dx, dy, false);
 
 	if (leveltype != DTYPE_TOWN) {
 		char bArch = dSpecial[sx][sy];
@@ -1246,6 +1251,7 @@ void DrawView(CelOutputBuffer out, int StartX, int StartY)
 		DrawAutomap(out.subregionY(0, gnViewportHeight));
 	}
 	DrawMonsterHealthBar(out);
+	DrawItemNameLabels(out);
 
 	if (stextflag && !qtextflag)
 		DrawSText(out);
@@ -1308,7 +1314,7 @@ void ClearScreenBuffer()
 {
 	lock_buf(3);
 
-	assert(pal_surface != NULL);
+	assert(pal_surface != nullptr);
 
 	SDL_Rect SrcRect = {
 		BUFFER_BORDER_LEFT,

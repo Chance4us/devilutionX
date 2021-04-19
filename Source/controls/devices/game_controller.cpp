@@ -157,7 +157,7 @@ void GameController::Add(int joystick_index)
 	SDL_Log("Opening game controller for joystick at index %d", joystick_index);
 	GameController result;
 	result.sdl_game_controller_ = SDL_GameControllerOpen(joystick_index);
-	if (result.sdl_game_controller_ == NULL) {
+	if (result.sdl_game_controller_ == nullptr) {
 		SDL_Log("%s", SDL_GetError());
 		SDL_ClearError();
 		return;
@@ -187,12 +187,11 @@ void GameController::Remove(SDL_JoystickID instance_id)
 
 GameController *GameController::Get(SDL_JoystickID instance_id)
 {
-	for (std::size_t i = 0; i < controllers_->size(); ++i) {
-		GameController &controller = (*controllers_)[i];
+	for (auto &controller : *controllers_) {
 		if (controller.instance_id_ == instance_id)
 			return &controller;
 	}
-	return NULL;
+	return nullptr;
 }
 
 GameController *GameController::Get(const SDL_Event &event)
@@ -204,7 +203,7 @@ GameController *GameController::Get(const SDL_Event &event)
 	case SDL_CONTROLLERBUTTONUP:
 		return Get(event.jball.which);
 	default:
-		return NULL;
+		return nullptr;
 	}
 }
 
@@ -215,8 +214,8 @@ const std::vector<GameController> &GameController::All()
 
 bool GameController::IsPressedOnAnyController(ControllerButton button)
 {
-	for (std::size_t i = 0; i < controllers_->size(); ++i)
-		if ((*controllers_)[i].IsPressed(button))
+	for (auto &controller : *controllers_)
+		if (controller.IsPressed(button))
 			return true;
 	return false;
 }

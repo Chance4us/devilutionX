@@ -59,7 +59,7 @@ void selconn_Load()
 	vecSelConnDlg.push_back(new UiArtText("Select Connection", rect7, UIS_CENTER | UIS_BIG));
 
 	SDL_Rect rect8 = { (Sint16)(PANEL_LEFT + 16), (Sint16)(UI_OFFSET_Y + 427), 250, 35 };
-	vecSelConnDlg.push_back(new UiArtTextButton("Change Gateway", NULL, rect8, UIS_CENTER | UIS_VCENTER | UIS_BIG | UIS_GOLD | UIS_HIDDEN));
+	vecSelConnDlg.push_back(new UiArtTextButton("Change Gateway", nullptr, rect8, UIS_CENTER | UIS_VCENTER | UIS_BIG | UIS_GOLD | UIS_HIDDEN));
 
 	vecSelConnDlg.push_back(new UiList(vecConnItems, PANEL_LEFT + 305, (UI_OFFSET_Y + 256), 285, 26, UIS_CENTER | UIS_VCENTER | UIS_GOLD));
 
@@ -76,16 +76,13 @@ void selconn_Free()
 {
 	ArtBackground.Unload();
 
-	for (std::size_t i = 0; i < vecConnItems.size(); i++) {
-		UiListItem *pUIItem = vecConnItems[i];
+	for (auto pUIItem : vecConnItems) {
 		delete pUIItem;
 	}
 	vecConnItems.clear();
 
-	for (std::size_t i = 0; i < vecSelConnDlg.size(); i++) {
-		UiItemBase *pUIMenuItem = vecSelConnDlg[i];
-		if (pUIMenuItem)
-			delete pUIMenuItem;
+	for (auto pUIMenuItem : vecSelConnDlg) {
+		delete pUIMenuItem;
 	}
 	vecSelConnDlg.clear();
 }

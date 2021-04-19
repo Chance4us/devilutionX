@@ -1,12 +1,12 @@
 #include "dvlnet/tcp_server.h"
 
-#include <functional>
 #include <chrono>
+#include <functional>
+#include <memory>
 
 #include "dvlnet/base.h"
 
-namespace devilution {
-namespace net {
+namespace devilution::net {
 
 tcp_server::tcp_server(asio::io_context &ioc, std::string bindaddr,
     unsigned short port, std::string pw)
@@ -15,7 +15,7 @@ tcp_server::tcp_server(asio::io_context &ioc, std::string bindaddr,
 {
 	auto addr = asio::ip::address::from_string(bindaddr);
 	auto ep = asio::ip::tcp::endpoint(addr, port);
-	acceptor.reset(new asio::ip::tcp::acceptor(ioc, ep, true));
+	acceptor = std::make_unique<asio::ip::tcp::acceptor>(ioc, ep, true);
 	start_accept();
 }
 
@@ -204,7 +204,7 @@ void tcp_server::drop_connection(scc con)
 	if (con->plr != PLR_BROADCAST) {
 		auto pkt = pktfty.make_packet<PT_DISCONNECT>(PLR_MASTER, PLR_BROADCAST,
 		    con->plr, LEAVE_DROP);
-		connections[con->plr] = NULL;
+		connections[con->plr] = nullptr;
 		send_packet(*pkt);
 		// TODO: investigate if it is really ok for the server to
 		//       drop a client directly.
@@ -222,5 +222,4 @@ tcp_server::~tcp_server()
 {
 }
 
-} // namespace net
-} // namespace devilution
+} // namespace devilution::net

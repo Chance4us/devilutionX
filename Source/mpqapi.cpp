@@ -34,11 +34,11 @@ namespace {
 // Done with templates so that error messages include actual size.
 template <std::size_t A, std::size_t B>
 struct assert_eq : std::true_type {
-	static_assert(A == B, "");
+	static_assert(A == B);
 };
 template <std::size_t A, std::size_t B>
 struct assert_lte : std::true_type {
-	static_assert(A <= B, "");
+	static_assert(A <= B);
 };
 template <typename T, std::size_t S>
 struct check_size : assert_eq<sizeof(T), S>, assert_lte<alignof(T), sizeof(T)> {
@@ -47,8 +47,8 @@ struct check_size : assert_eq<sizeof(T), S>, assert_lte<alignof(T), sizeof(T)> {
 // Check sizes and alignments of the structs that we decrypt and encrypt.
 // The decryption algorithm treats them as a stream of 32-bit uints, so the
 // sizes must be exact as there cannot be any padding.
-static_assert(check_size<_HASHENTRY, 4 * 4>::value, "");
-static_assert(check_size<_BLOCKENTRY, 4 * 4>::value, "");
+static_assert(check_size<_HASHENTRY, 4 * 4>::value);
+static_assert(check_size<_BLOCKENTRY, 4 * 4>::value);
 
 const char *DirToString(std::ios::seekdir dir)
 {
@@ -88,18 +88,18 @@ struct FStreamWrapper {
 public:
 	bool Open(const char *path, std::ios::openmode mode)
 	{
-		s_.reset(new std::fstream(path, mode));
+		s_ = std::make_unique<std::fstream>(path, mode);
 		return CheckError("new std::fstream(\"%s\", %s)", path, OpenModeToString(mode).c_str());
 	}
 
 	void Close()
 	{
-		s_ = NULL;
+		s_ = nullptr;
 	}
 
 	bool IsOpen() const
 	{
-		return s_ != NULL;
+		return s_ != nullptr;
 	}
 
 	bool seekg(std::streampos pos)
@@ -158,7 +158,7 @@ private:
 			std::string fmt_with_error = fmt;
 			fmt_with_error.append(": failed with \"%s\"");
 			const char *error_message = std::strerror(errno);
-			if (error_message == NULL)
+			if (error_message == nullptr)
 				error_message = "";
 			SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, fmt_with_error.c_str(), args..., error_message);
 #ifdef _DEBUG
@@ -242,9 +242,9 @@ struct Archive {
 		name.clear();
 		if (clear_tables) {
 			delete[] sgpHashTbl;
-			sgpHashTbl = NULL;
+			sgpHashTbl = nullptr;
 			delete[] sgpBlockTbl;
-			sgpBlockTbl = NULL;
+			sgpBlockTbl = nullptr;
 		}
 		return result;
 	}
@@ -406,7 +406,7 @@ void mpqapi_alloc_block(uint32_t block_offset, uint32_t block_size)
 	if (block_offset + block_size == cur_archive.size) {
 		cur_archive.size = block_offset;
 	} else {
-		block = mpqapi_new_block(NULL);
+		block = mpqapi_new_block(nullptr);
 		block->offset = block_offset;
 		block->sizealloc = block_size;
 		block->sizefile = 0;
@@ -618,7 +618,7 @@ bool mpqapi_write_file(const char *pszName, const BYTE *pbData, DWORD dwLen)
 
 	cur_archive.modified = true;
 	mpqapi_remove_hash_entry(pszName);
-	blockEntry = mpqapi_add_file(pszName, 0, 0);
+	blockEntry = mpqapi_add_file(pszName, nullptr, 0);
 	if (!mpqapi_write_file_contents(pszName, pbData, dwLen, blockEntry)) {
 		mpqapi_remove_hash_entry(pszName);
 		return false;
@@ -658,7 +658,7 @@ bool OpenMPQ(const char *pszArchive, DWORD dwChar)
 	if (!cur_archive.Open(pszArchive)) {
 		return false;
 	}
-	if (cur_archive.sgpBlockTbl == NULL || cur_archive.sgpHashTbl == NULL) {
+	if (cur_archive.sgpBlockTbl == nullptr || cur_archive.sgpHashTbl == nullptr) {
 		if (!cur_archive.exists) {
 			InitDefaultMpqHeader(&cur_archive, &fhdr);
 		} else if (!ReadMPQHeader(&cur_archive, &fhdr)) {

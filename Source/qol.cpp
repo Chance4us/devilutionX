@@ -4,9 +4,9 @@
  * Quality of life features
  */
 
+#include "DiabloUI/art_draw.h"
 #include "control.h"
 #include "cursor.h"
-#include "DiabloUI/art_draw.h"
 #include "options.h"
 #include "qol/common.h"
 #include "qol/xpbar.h"
@@ -21,24 +21,6 @@ struct QolArt {
 };
 
 QolArt *qolArt = nullptr;
-
-int GetTextWidth(const char *s)
-{
-	int l = 0;
-	while (*s) {
-		l += fontkern[fontframe[gbFontTransTbl[(BYTE)*s++]]] + 1;
-	}
-	return l;
-}
-
-void FastDrawVertLine(CelOutputBuffer out, int x, int y, int height, BYTE col)
-{
-	BYTE *p = out.at(x, y);
-	for (int j = 0; j < height; j++) {
-		*p = col;
-		p += out.pitch();
-	}
-}
 
 } // namespace
 
@@ -146,13 +128,9 @@ void DrawMonsterHealthBar(CelOutputBuffer out)
 	}
 }
 
-
-
 bool HasRoomForGold()
 {
-	for (int i = 0; i < NUM_INV_GRID_ELEM; i++) {
-		int idx = plr[myplr].InvGrid[i];
-
+	for (int idx : plr[myplr].InvGrid) {
 		// Secondary item cell. No need to check those as we'll go through the main item cells anyway.
 		if (idx < 0)
 			continue;
