@@ -7,7 +7,7 @@
 
 namespace devilution {
 
-void ToggleItemLabelHighlight();
+void ToggleItemLabelHighlight(int i);
 void AltPressed(bool pressed);
 bool IsGeneratingItemLabels();
 bool IsItemLabelHighlighted();

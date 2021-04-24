@@ -365,6 +365,14 @@ static void run_game_loop(interface_mode uMsg)
 	nthread_ignore_mutex(false);
 
 	while (gbRunGame) {
+
+		if(leveltype == DTYPE_TOWN) {
+			ToggleItemLabelHighlight( 0 );
+		}
+		else {
+			ToggleItemLabelHighlight( 1 );
+		}
+
 		while (FetchMessage(&msg)) {
 			if (msg.message == DVL_WM_QUIT) {
 				gbRunGameResult = false;
@@ -972,8 +980,8 @@ static void ReleaseKey(int vkey)
 		CaptureScreen();
 	if (vkey == DVL_VK_MENU || vkey == DVL_VK_LMENU || vkey == DVL_VK_RMENU)
 		AltPressed(false);
-	if (vkey == DVL_VK_CONTROL || vkey == DVL_VK_LCONTROL || vkey == DVL_VK_RCONTROL)
-		ToggleItemLabelHighlight();
+	/*if (vkey == DVL_VK_CONTROL || vkey == DVL_VK_LCONTROL || vkey == DVL_VK_RCONTROL)
+		ToggleItemLabelHighlight();*/
 }
 
 static void ClosePanels()
@@ -1656,6 +1664,7 @@ void GM_Game(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DIABTOWNWARP:
 	case WM_DIABTWARPUP:
 	case WM_DIABRETOWN:
+		ToggleItemLabelHighlight( 0 );
 		if (gbIsMultiplayer)
 			pfile_write_hero();
 		nthread_ignore_mutex(true);
