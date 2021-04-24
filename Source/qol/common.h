@@ -6,12 +6,17 @@
 #pragma once
 
 #include <SDL.h>
+#include "items.h"
+#include "control.h"
 
 namespace devilution {
 
-struct CelOutputBuffer;
-
+bool IsMouseOverGameArea();
+text_color GetItemTextColor(ItemStruct &item, bool reqCheck = true);
+int GetTextWidth(const char *s);
+void FastDrawVertLine(const CelOutputBuffer &out, int x, int y, int height, Uint8 col);
 void FastDrawHorizLine(const CelOutputBuffer &out, int x, int y, int width, Uint8 col);
+void FillRect(const CelOutputBuffer &out, int x, int y, int width, int height, Uint8 col);
 /**
  * @brief Prints integer into buffer, using ',' as thousands separator.
  * @param out Destination buffer

@@ -24,24 +24,6 @@ struct QolArt {
 
 QolArt *qolArt = nullptr;
 
-int GetTextWidth(const char *s)
-{
-	int l = 0;
-	while (*s) {
-		l += fontkern[fontframe[gbFontTransTbl[(BYTE)*s++]]] + 1;
-	}
-	return l;
-}
-
-void FastDrawVertLine(CelOutputBuffer out, int x, int y, int height, BYTE col)
-{
-	BYTE *p = out.at(x, y);
-	for (int j = 0; j < height; j++) {
-		*p = col;
-		p += out.pitch();
-	}
-}
-
 } // namespace
 
 void FreeQol()
@@ -109,7 +91,7 @@ void DrawMonsterHealthBar(const CelOutputBuffer &out)
 	}
 
 	if (sgOptions.Gameplay.bShowMonsterType) {
-		Uint8 borderColors[] = { 248 /*undead*/, 232 /*demon*/, 150 /*beast*/ };
+		Uint8 borderColors[] = { PAL16_GRAY + 8 /*undead*/, PAL16_RED + 8 /*demon*/, PAL8_YELLOW + 6 /*beast*/ };
 		Uint8 borderColor = borderColors[mon->MData->mMonstClass];
 		int borderWidth = width - (border * 2);
 		FastDrawHorizLine(out, xPos + border, yPos + border, borderWidth, borderColor);
