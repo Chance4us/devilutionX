@@ -33,7 +33,7 @@ int AutoMapY;
 /** color for bright map lines (doors, stairs etc.) */
 #define COLOR_BRIGHT PAL8_YELLOW
 /** color for dim map lines/dots */
-#define COLOR_DIM (PAL16_YELLOW + 8)
+#define COLOR_DIM (PAL16_YELLOW + 8 - 18)
 // color for items on automap
 #define COLOR_ITEM (PAL8_BLUE + 1)
 

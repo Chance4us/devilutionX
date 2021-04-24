@@ -471,6 +471,7 @@ void SetPixel(const CelOutputBuffer &out, int sx, int sy, BYTE col)
 	if (!out.in_bounds(sx, sy))
 		return;
 
+	*out.at(sx, sy+1) = 0; // add black pixel
 	*out.at(sx, sy) = col;
 }
 
