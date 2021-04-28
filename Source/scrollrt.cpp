@@ -25,6 +25,7 @@
 #include "plrmsg.h"
 #include "qol/monhealthbar.h"
 #include "qol/xpbar.h"
+#include "qol/itemlabels.h"
 #include "render.h"
 #include "stores.h"
 #include "towners.h"
@@ -645,6 +646,8 @@ static void DrawItem(const CelOutputBuffer &out, int x, int y, int sx, int sy, b
 		CelBlitOutlineTo(out, GetOutlineColor(*pItem, false), px, sy, pCelBuff, nCel, pItem->_iAnimWidth);
 	}
 	CelClippedDrawLightTo(out, px, sy, pCelBuff, nCel, pItem->_iAnimWidth);
+	if (pItem->_iAnimFrame == pItem->_iAnimLen)
+		AddItemToLabelQueue(sx, sy, bItem - 1);
 }
 
 /**
@@ -741,6 +744,8 @@ static void scrollrt_draw_dungeon(const CelOutputBuffer &out, int sx, int sy, in
 	if (dRendered[sx][sy])
 		return;
 	dRendered[sx][sy] = true;
+
+	GenerateItemLabelOffsets(out);
 
 	light_table_index = dLight[sx][sy];
 
@@ -1249,6 +1254,7 @@ void DrawView(const CelOutputBuffer &out, int StartX, int StartY)
 		DrawAutomap(out.subregionY(0, gnViewportHeight));
 	}
 	DrawMonsterHealthBar(out);
+	DrawItemNameLabels(out);
 
 	if (stextflag != STORE_NONE && !qtextflag)
 		DrawSText(out);

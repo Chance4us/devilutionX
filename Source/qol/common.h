@@ -6,10 +6,13 @@
 #pragma once
 
 #include <SDL.h>
+#include "items.h"
+#include "control.h"
 
 namespace devilution {
 
-struct CelOutputBuffer;
+bool IsMouseOverGameArea();
+text_color GetItemTextColor(ItemStruct &item, bool reqCheck = true);
 
 /**
  * @brief Return width (in pixels) of the passed in string, when printed with smaltext.cel. Does not consider line breaks.
@@ -45,6 +48,8 @@ void FastDrawVertLine(CelOutputBuffer out, int x, int y, int height, Uint8 col);
  * @return Address of first character after printed number
 */
 char *PrintWithSeparator(char *out, long long n);
+
+void FillRect(const CelOutputBuffer &out, int x, int y, int width, int height, Uint8 col);
 
 void FreeQol();
 void InitQol();

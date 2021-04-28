@@ -1,6 +1,6 @@
 /**
 * @file monhealthbar.cpp
-* 
+*
 * Adds monster health bar QoL feature
 */
 
@@ -83,7 +83,7 @@ void DrawMonsterHealthBar(const CelOutputBuffer &out)
 	}
 
 	if (sgOptions.Gameplay.bShowMonsterType) {
-		Uint8 borderColors[] = { 248 /*undead*/, 232 /*demon*/, 150 /*beast*/ };
+		Uint8 borderColors[] = { PAL16_GRAY + 8 /*undead*/, PAL16_RED + 8 /*demon*/, PAL8_YELLOW + 6 /*beast*/ };
 		Uint8 borderColor = borderColors[mon.MData->mMonstClass];
 		int borderWidth = width - (border * 2);
 		FastDrawHorizLine(out, xPos + border, yPos + border, borderWidth, borderColor);

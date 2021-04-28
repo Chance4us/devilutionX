@@ -210,7 +210,7 @@ struct CelOutputBuffer {
 	 * @brief Line width of the raw underlying byte buffer.
 	 * May be wider than its logical width (for power-of-2 alignment).
 	 */
-	int pitch()
+	int pitch() const
 	{
 		return surface->pitch;
 	}
