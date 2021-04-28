@@ -46,9 +46,11 @@ bool invertHighlightToggle = false;
 extern BYTE ItemAnimLs[];
 extern BYTE *itemanims[ITEMTYPES];
 
-void ToggleItemLabelHighlight()
+void ToggleItemLabelHighlight(int i)
 {
-	invertHighlightToggle = !invertHighlightToggle;
+	//invertHighlightToggle = !invertHighlightToggle;
+	if (i == 0) invertHighlightToggle = false;
+	if (i == 1) invertHighlightToggle = true;
 }
 
 void AltPressed(bool pressed)
