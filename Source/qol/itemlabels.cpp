@@ -116,7 +116,7 @@ void AddItemToLabelQueue(int x, int y, int id)
 		y <<= 1;
 	}
 	x -= nameWidth >> 1;
-	labelQueue.push_back(itemLabel{ id, it->_ix, it->_iy, x, y, nameWidth, 13, GetItemTextColor(*it, false), textOnGround });
+	labelQueue.push_back(itemLabel{ id, it->position.x, it->position.y, x, y, nameWidth, 13, GetItemTextColor(*it, false), textOnGround });
 }
 
 void DrawItemNameLabels(const CelOutputBuffer &out)
