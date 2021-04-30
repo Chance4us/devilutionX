@@ -438,15 +438,15 @@ void delta_init()
 	deltaload = false;
 }
 
-void delta_kill_monster(int mi, BYTE x, BYTE y, BYTE bLevel)
+void delta_kill_monster(int mi, Point position, BYTE bLevel)
 {
 	if (!gbIsMultiplayer)
 		return;
 
 	sgbDeltaChanged = true;
 	DMonsterStr *pD = &sgLevels[bLevel].monster[mi];
-	pD->_mx = x;
-	pD->_my = y;
+	pD->_mx = position.x;
+	pD->_my = position.y;
 	pD->_mdir = monster[mi]._mdir;
 	pD->_mhitpoints = 0;
 }
@@ -477,7 +477,7 @@ void delta_sync_monster(const TSyncMonster *pSync, BYTE bLevel)
 
 	pD->_mx = pSync->_mx;
 	pD->_my = pSync->_my;
-	pD->_mactive = UCHAR_MAX;
+	pD->_mactive = UINT8_MAX;
 	pD->_menemy = pSync->_menemy;
 }
 
@@ -490,7 +490,7 @@ void delta_sync_golem(TCmdGolem *pG, int pnum, BYTE bLevel)
 	DMonsterStr *pD = &sgLevels[bLevel].monster[pnum];
 	pD->_mx = pG->_mx;
 	pD->_my = pG->_my;
-	pD->_mactive = UCHAR_MAX;
+	pD->_mactive = UINT8_MAX;
 	pD->_menemy = pG->_menemy;
 	pD->_mdir = pG->_mdir;
 	pD->_mhitpoints = pG->_mhitpoints;
@@ -720,9 +720,9 @@ void DeltaLoadLevel()
 					if (monster[i]._mAi != AI_DIABLO) {
 						if (monster[i]._uniqtype == 0) {
 							assert(monster[i].MType != nullptr);
-							AddDead(monster[i].position.tile.x, monster[i].position.tile.y, monster[i].MType->mdeadval, monster[i]._mdir);
+							AddDead(monster[i].position.tile, monster[i].MType->mdeadval, monster[i]._mdir);
 						} else {
-							AddDead(monster[i].position.tile.x, monster[i].position.tile.y, monster[i]._udeadval, monster[i]._mdir);
+							AddDead(monster[i].position.tile, monster[i]._udeadval, monster[i]._mdir);
 						}
 					}
 					monster[i]._mDelFlag = true;
@@ -870,26 +870,26 @@ void NetSendCmdGolem(BYTE mx, BYTE my, direction dir, BYTE menemy, int hp, BYTE 
 	NetSendLoPri(myplr, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdLoc(int playerId, bool bHiPri, _cmd_id bCmd, BYTE x, BYTE y)
+void NetSendCmdLoc(int playerId, bool bHiPri, _cmd_id bCmd, Point position)
 {
 	TCmdLoc cmd;
 
 	cmd.bCmd = bCmd;
-	cmd.x = x;
-	cmd.y = y;
+	cmd.x = position.x;
+	cmd.y = position.y;
 	if (bHiPri)
 		NetSendHiPri(playerId, (BYTE *)&cmd, sizeof(cmd));
 	else
 		NetSendLoPri(playerId, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdLocParam1(bool bHiPri, _cmd_id bCmd, BYTE x, BYTE y, WORD wParam1)
+void NetSendCmdLocParam1(bool bHiPri, _cmd_id bCmd, Point position, uint16_t wParam1)
 {
 	TCmdLocParam1 cmd;
 
 	cmd.bCmd = bCmd;
-	cmd.x = x;
-	cmd.y = y;
+	cmd.x = position.x;
+	cmd.y = position.y;
 	cmd.wParam1 = wParam1;
 	if (bHiPri)
 		NetSendHiPri(myplr, (BYTE *)&cmd, sizeof(cmd));
@@ -897,13 +897,13 @@ void NetSendCmdLocParam1(bool bHiPri, _cmd_id bCmd, BYTE x, BYTE y, WORD wParam1
 		NetSendLoPri(myplr, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdLocParam2(bool bHiPri, _cmd_id bCmd, BYTE x, BYTE y, WORD wParam1, WORD wParam2)
+void NetSendCmdLocParam2(bool bHiPri, _cmd_id bCmd, Point position, uint16_t wParam1, uint16_t wParam2)
 {
 	TCmdLocParam2 cmd;
 
 	cmd.bCmd = bCmd;
-	cmd.x = x;
-	cmd.y = y;
+	cmd.x = position.x;
+	cmd.y = position.y;
 	cmd.wParam1 = wParam1;
 	cmd.wParam2 = wParam2;
 	if (bHiPri)
@@ -912,13 +912,13 @@ void NetSendCmdLocParam2(bool bHiPri, _cmd_id bCmd, BYTE x, BYTE y, WORD wParam1
 		NetSendLoPri(myplr, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdLocParam3(bool bHiPri, _cmd_id bCmd, BYTE x, BYTE y, WORD wParam1, WORD wParam2, WORD wParam3)
+void NetSendCmdLocParam3(bool bHiPri, _cmd_id bCmd, Point position, uint16_t wParam1, uint16_t wParam2, uint16_t wParam3)
 {
 	TCmdLocParam3 cmd;
 
 	cmd.bCmd = bCmd;
-	cmd.x = x;
-	cmd.y = y;
+	cmd.x = position.x;
+	cmd.y = position.y;
 	cmd.wParam1 = wParam1;
 	cmd.wParam2 = wParam2;
 	cmd.wParam3 = wParam3;
@@ -928,7 +928,7 @@ void NetSendCmdLocParam3(bool bHiPri, _cmd_id bCmd, BYTE x, BYTE y, WORD wParam1
 		NetSendLoPri(myplr, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdParam1(bool bHiPri, _cmd_id bCmd, WORD wParam1)
+void NetSendCmdParam1(bool bHiPri, _cmd_id bCmd, uint16_t wParam1)
 {
 	TCmdParam1 cmd;
 
@@ -940,7 +940,7 @@ void NetSendCmdParam1(bool bHiPri, _cmd_id bCmd, WORD wParam1)
 		NetSendLoPri(myplr, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdParam2(bool bHiPri, _cmd_id bCmd, WORD wParam1, WORD wParam2)
+void NetSendCmdParam2(bool bHiPri, _cmd_id bCmd, uint16_t wParam1, uint16_t wParam2)
 {
 	TCmdParam2 cmd;
 
@@ -953,7 +953,7 @@ void NetSendCmdParam2(bool bHiPri, _cmd_id bCmd, WORD wParam1, WORD wParam2)
 		NetSendLoPri(myplr, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdParam3(bool bHiPri, _cmd_id bCmd, WORD wParam1, WORD wParam2, WORD wParam3)
+void NetSendCmdParam3(bool bHiPri, _cmd_id bCmd, uint16_t wParam1, uint16_t wParam2, uint16_t wParam3)
 {
 	TCmdParam3 cmd;
 
@@ -1085,13 +1085,13 @@ void NetSendCmdExtra(TCmdGItem *p)
 	NetSendHiPri(myplr, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdPItem(bool bHiPri, _cmd_id bCmd, BYTE x, BYTE y)
+void NetSendCmdPItem(bool bHiPri, _cmd_id bCmd, Point position)
 {
 	TCmdPItem cmd;
 
 	cmd.bCmd = bCmd;
-	cmd.x = x;
-	cmd.y = y;
+	cmd.x = position.x;
+	cmd.y = position.y;
 	cmd.wIndx = plr[myplr].HoldItem.IDidx;
 
 	if (plr[myplr].HoldItem.IDidx == IDI_EAR) {
@@ -1232,7 +1232,7 @@ void NetSendCmdDamage(bool bHiPri, BYTE bPlr, DWORD dwDam)
 		NetSendLoPri(myplr, (BYTE *)&cmd, sizeof(cmd));
 }
 
-void NetSendCmdMonDmg(bool bHiPri, WORD wMon, DWORD dwDam)
+void NetSendCmdMonDmg(bool bHiPri, uint16_t wMon, DWORD dwDam)
 {
 	TCmdMonDamage cmd;
 
@@ -1437,7 +1437,7 @@ static DWORD On_GETITEM(TCmd *pCmd, int pnum)
 			if ((currlevel == p->bLevel || p->bPnum == myplr) && p->bMaster != myplr) {
 				if (p->bPnum == myplr) {
 					if (currlevel != p->bLevel) {
-						ii = SyncPutItem(myplr, plr[myplr].position.tile.x, plr[myplr].position.tile.y, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
+						ii = SyncPutItem(myplr, plr[myplr].position.tile, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
 						if (ii != -1)
 							InvGetItem(myplr, &items[ii], ii);
 					} else
@@ -1499,7 +1499,7 @@ static DWORD On_AGETITEM(TCmd *pCmd, int pnum)
 			if ((currlevel == p->bLevel || p->bPnum == myplr) && p->bMaster != myplr) {
 				if (p->bPnum == myplr) {
 					if (currlevel != p->bLevel) {
-						int ii = SyncPutItem(myplr, plr[myplr].position.tile.x, plr[myplr].position.tile.y, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
+						int ii = SyncPutItem(myplr, plr[myplr].position.tile, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
 						if (ii != -1)
 							AutoGetItem(myplr, &items[ii], ii);
 					} else
@@ -1538,9 +1538,9 @@ static DWORD On_PUTITEM(TCmd *pCmd, int pnum)
 	else if (currlevel == plr[pnum].plrlevel) {
 		int ii;
 		if (pnum == myplr)
-			ii = InvPutItem(pnum, p->x, p->y);
+			ii = InvPutItem(pnum, { p->x, p->y });
 		else
-			ii = SyncPutItem(pnum, p->x, p->y, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
+			ii = SyncPutItem(pnum, { p->x, p->y }, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
 		if (ii != -1) {
 			PutItemRecord(p->dwSeed, p->wCI, p->wIndx);
 			delta_put_item(p, items[ii].position.x, items[ii].position.y, plr[pnum].plrlevel);
@@ -1563,7 +1563,7 @@ static DWORD On_SYNCPUTITEM(TCmd *pCmd, int pnum)
 	if (gbBufferMsgs == 1)
 		msg_send_packet(pnum, p, sizeof(*p));
 	else if (currlevel == plr[pnum].plrlevel) {
-		int ii = SyncPutItem(pnum, p->x, p->y, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
+		int ii = SyncPutItem(pnum, { p->x, p->y }, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
 		if (ii != -1) {
 			PutItemRecord(p->dwSeed, p->wCI, p->wIndx);
 			delta_put_item(p, items[ii].position.x, items[ii].position.y, plr[pnum].plrlevel);
@@ -1587,7 +1587,7 @@ static DWORD On_RESPAWNITEM(TCmd *pCmd, int pnum)
 		msg_send_packet(pnum, p, sizeof(*p));
 	else {
 		if (currlevel == plr[pnum].plrlevel && pnum != myplr) {
-			SyncPutItem(pnum, p->x, p->y, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
+			SyncPutItem(pnum, { p->x, p->y }, p->wIndx, p->wCI, p->dwSeed, p->bId, p->bDur, p->bMDur, p->bCh, p->bMCh, p->wValue, p->dwBuff, p->wToHit, p->wMaxDam, p->bMinStr, p->bMinMag, p->bMinDex, p->bAC);
 		}
 		PutItemRecord(p->dwSeed, p->wCI, p->wIndx);
 		delta_put_item(p, p->x, p->y, plr[pnum].plrlevel);
@@ -1971,7 +1971,7 @@ static DWORD On_MONSTDEATH(TCmd *pCmd, int pnum)
 	else if (pnum != myplr) {
 		if (currlevel == plr[pnum].plrlevel)
 			M_SyncStartKill(p->wParam1, p->x, p->y, pnum);
-		delta_kill_monster(p->wParam1, p->x, p->y, plr[pnum].plrlevel);
+		delta_kill_monster(p->wParam1, { p->x, p->y }, plr[pnum].plrlevel);
 	}
 
 	return sizeof(*p);
@@ -1986,7 +1986,7 @@ static DWORD On_KILLGOLEM(TCmd *pCmd, int pnum)
 	else if (pnum != myplr) {
 		if (currlevel == p->wParam1)
 			M_SyncStartKill(pnum, p->x, p->y, pnum);
-		delta_kill_monster(pnum, p->x, p->y, plr[pnum].plrlevel);
+		delta_kill_monster(pnum, { p->x, p->y }, plr[pnum].plrlevel);
 	}
 
 	return sizeof(*p);
@@ -2235,8 +2235,8 @@ static DWORD On_PLAYER_JOINLEVEL(TCmd *pCmd, int pnum)
 					LoadPlrGFX(pnum, PFILE_DEATH);
 					plr[pnum]._pmode = PM_DEATH;
 					NewPlrAnim(pnum, plr[pnum]._pDAnim[DIR_S], plr[pnum]._pDFrames, 1, plr[pnum]._pDWidth);
-					plr[pnum]._pAnimFrame = plr[pnum]._pAnimLen - 1;
-					plr[pnum].actionFrame = plr[pnum]._pAnimLen * 2;
+					plr[pnum].AnimInfo.CurrentFrame = plr[pnum].AnimInfo.NumberOfFrames - 1;
+					plr[pnum].actionFrame = plr[pnum].AnimInfo.NumberOfFrames * 2;
 					dFlags[plr[pnum].position.tile.x][plr[pnum].position.tile.y] |= BFLAG_DEAD_PLAYER;
 				}
 

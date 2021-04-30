@@ -21,7 +21,8 @@ option(DIST "Dynamically link only glibc and SDL2" OFF)
 option(BINARY_RELEASE "Enable options for binary release" OFF)
 option(NIGHTLY_BUILD "Enable options for nightly build" OFF)
 option(USE_SDL1 "Use SDL1.2 instead of SDL2" OFF)
-option(NONET "Disable network" OFF)
+option(NONET "Disable network support" OFF)
+option(NOSOUND "Disable sound support" OFF)
 option(RUN_TESTS "Build and run tests" OFF)
 option(USE_GETTEXT "Build translation files using gettext" OFF)
 
@@ -47,9 +48,17 @@ if(NIGHTLY_BUILD OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
   set(CPACK ON)
 endif()
 
-option(DEVILUTIONX_SYSTEM_LIBSODIUM "Use system-provided libsodium" ON)
-cmake_dependent_option(DEVILUTIONX_STATIC_LIBSODIUM "Link static libsodium" OFF
-                       "DEVILUTIONX_SYSTEM_LIBSODIUM AND NOT DIST" ON)
+if(NOT NOSOUND)
+  option(DEVILUTIONX_SYSTEM_SDL_AUDIOLIB "Use system-provided SDL_audiolib" OFF)
+  cmake_dependent_option(DEVILUTIONX_STATIC_SDL_AUDIOLIB "Link static SDL_audiolib" OFF
+                        "DEVILUTIONX_SYSTEM_SDL_AUDIOLIB AND NOT DIST" ON)
+endif()
+
+if(NOT NONET)
+  option(DEVILUTIONX_SYSTEM_LIBSODIUM "Use system-provided libsodium" ON)
+  cmake_dependent_option(DEVILUTIONX_STATIC_LIBSODIUM "Link static libsodium" OFF
+                        "DEVILUTIONX_SYSTEM_LIBSODIUM AND NOT DIST" ON)
+endif()
 
 option(DEVILUTIONX_SYSTEM_LIBFMT "Use system-provided libfmt" ON)
 cmake_dependent_option(DEVILUTIONX_STATIC_LIBFMT "Link static libfmt" OFF
@@ -169,6 +178,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # for clang-tidy
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
+if(NOT NOSOUND)
+  if(DEVILUTIONX_SYSTEM_SDL_AUDIOLIB)
+    find_package(SDL_audiolib REQUIRED)
+  else()
+    add_subdirectory(3rdParty/SDL_audiolib)
+  endif()
+endif()
+
 if(NOT N3DS)
   find_package(Threads REQUIRED)
 endif()
@@ -197,7 +214,6 @@ endif()
 if(USE_SDL1)
   find_package(SDL REQUIRED)
   find_package(SDL_ttf REQUIRED)
-  find_package(SDL_mixer REQUIRED)
   include_directories(${SDL_INCLUDE_DIR})
 else()
   find_package(SDL2 REQUIRED)
@@ -206,6 +222,10 @@ else()
   elseif(TARGET SDL2::SDL2-static)
     # On some distros, such as vitasdk, only the SDL2::SDL2-static target is available.
     # Alias to SDL2::SDL2 because some finder scripts may refer to SDL2::SDL2.
+    if(CMAKE_VERSION VERSION_LESS "3.18")
+      # Aliasing local targets is not supported on CMake < 3.18, so make it global.
+      set_target_properties(SDL2::SDL2-static PROPERTIES IMPORTED_GLOBAL TRUE)
+    endif()
     add_library(SDL2::SDL2 ALIAS SDL2::SDL2-static)
     set(SDL2_MAIN SDL2::SDL2main)
   else()
@@ -218,7 +238,6 @@ else()
     add_library(SDL2::SDL2 ALIAS SDL2_lib)
   endif()
   find_package(SDL2_ttf REQUIRED)
-  find_package(SDL2_mixer REQUIRED)
 endif()
 
 add_library(smacker STATIC
@@ -266,7 +285,6 @@ set(devilutionx_SRCS
   Source/drlg_l4.cpp
   Source/dthread.cpp
   Source/dx.cpp
-  Source/effects.cpp
   Source/encrypt.cpp
   Source/engine.cpp
   Source/error.cpp
@@ -308,7 +326,6 @@ set(devilutionx_SRCS
   Source/scrollrt.cpp
   Source/setmaps.cpp
   Source/sha.cpp
-  Source/sound.cpp
   Source/spelldat.cpp
   Source/spells.cpp
   Source/stores.cpp
@@ -331,6 +348,7 @@ set(devilutionx_SRCS
   Source/controls/modifier_hints.cpp
   Source/controls/plrctrls.cpp
   Source/controls/touch.cpp
+  Source/engine/animationinfo.cpp
   Source/qol/autopickup.cpp
   Source/qol/common.cpp
   Source/qol/monhealthbar.cpp
@@ -341,7 +359,6 @@ set(devilutionx_SRCS
   Source/utils/file_util.cpp
   Source/utils/language.cpp
   Source/utils/paths.cpp
-  Source/utils/soundsample.cpp
   Source/utils/thread.cpp
   Source/DiabloUI/art.cpp
   Source/DiabloUI/art_draw.cpp
@@ -385,12 +402,23 @@ if(USE_SDL1)
   list(APPEND devilutionx_SRCS Source/utils/sdl2_to_1_2_backports.cpp)
 endif()
 
+if(NOSOUND)
+  list(APPEND devilutionx_SRCS
+    Source/effects_stubs.cpp
+    Source/sound_stubs.cpp)
+else()
+  list(APPEND devilutionx_SRCS
+    Source/effects.cpp
+    Source/sound.cpp
+    Source/utils/push_aulib_decoder.cpp
+    Source/utils/soundsample.cpp)
+endif()
+
 if(NOT NONET)
   list(APPEND devilutionx_SRCS
     Source/dvlnet/tcp_client.cpp
     Source/dvlnet/tcp_server.cpp
     Source/dvlnet/protocol_zt.cpp
-    Source/dvlnet/base_protocol.cpp
     Source/dvlnet/zerotier_native.cpp
     Source/dvlnet/zerotier_lwip.cpp)
 endif()
@@ -441,7 +469,7 @@ if(RUN_TESTS)
     test/scrollrt_test.cpp
     test/stores_test.cpp
     test/writehero_test.cpp
-    test/animationinformation_test.cpp)
+    test/animationinfo_test.cpp)
 endif()
 
 add_executable(${BIN_TARGET} WIN32 MACOSX_BUNDLE ${devilutionx_SRCS})
@@ -524,6 +552,7 @@ target_compile_definitions(${BIN_TARGET} PRIVATE ASIO_STANDALONE)
 # Defines without value
 foreach(
   def_name
+  NOSOUND
   NONET
   PREFILL_PLAYER_NAME
   DISABLE_STREAMING_MUSIC
@@ -540,6 +569,10 @@ foreach(
   def_name
   DEFAULT_WIDTH
   DEFAULT_HEIGHT
+  DEFAULT_AUDIO_SAMPLE_RATE
+  DEFAULT_AUDIO_CHANNELS
+  DEFAULT_AUDIO_BUFFER_SIZE
+  DEFAULT_AUDIO_RESAMPLING_QUALITY
   TTF_FONT_DIR
   TTF_FONT_NAME
   SDL1_VIDEO_MODE_BPP
@@ -608,15 +641,17 @@ target_link_libraries(${BIN_TARGET} PUBLIC $<${UBSAN_GENEX}:-fsanitize=undefined
 if(USE_SDL1)
   target_link_libraries(${BIN_TARGET} PRIVATE
     ${SDL_TTF_LIBRARY}
-    ${SDL_MIXER_LIBRARY}
     ${SDL_LIBRARY})
   target_compile_definitions(${BIN_TARGET} PRIVATE USE_SDL1)
 else()
   target_link_libraries(${BIN_TARGET} PRIVATE
     SDL2::SDL2
     ${SDL2_MAIN}
-    SDL2::SDL2_ttf
-    SDL2::SDL2_mixer)
+    SDL2::SDL2_ttf)
+endif()
+
+if(NOT NOSOUND)
+  target_link_libraries(${BIN_TARGET} PRIVATE SDL_audiolib)
 endif()
 
 if(SWITCH)
@@ -635,18 +670,7 @@ endif()
 
 if (VITA)
   target_link_libraries(${BIN_TARGET} PRIVATE
-        SceAppMgr_stub
-        SceAudio_stub
-        SceCommonDialog_stub
-        SceCtrl_stub
-        SceDisplay_stub
-        SceGxm_stub
-        SceHid_stub
-        SceIofilemgr_stub
-        SceMotion_stub
         ScePower_stub
-        SceSysmodule_stub
-        SceTouch_stub
         freetype
         png
         m
@@ -777,6 +801,7 @@ if(VITA)
     FILE Packaging/vita/sce_sys/livearea/contents/logo0.png sce_sys/livearea/contents/logo0.png
     FILE Packaging/vita/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
     FILE Packaging/resources/CharisSILB.ttf CharisSILB.ttf
+    FILE Packaging/resources/devilutionx.mpq devilutionx.mpq
   )
 endif()
 
@@ -821,9 +846,6 @@ if(CPACK)
     install(FILES "${PROJECT_SOURCE_DIR}/SDL2-2.0.14/i686-w64-mingw32/bin/SDL2.dll"
       DESTINATION "."
     )
-    install(FILES "${PROJECT_SOURCE_DIR}/SDL2_mixer-2.0.4/i686-w64-mingw32/bin/SDL2_mixer.dll"
-      DESTINATION "."
-    )
     install(FILES "${PROJECT_SOURCE_DIR}/SDL2_ttf-2.0.15/i686-w64-mingw32/bin/SDL2_ttf.dll"
       DESTINATION "."
     )
@@ -859,9 +881,6 @@ if(CPACK)
       DESTINATION "."
     )
     install(FILES "${PROJECT_SOURCE_DIR}/SDL2-2.0.14/x86_64-w64-mingw32/bin/SDL2.dll"
-      DESTINATION "."
-    )
-    install(FILES "${PROJECT_SOURCE_DIR}/SDL2_mixer-2.0.4/x86_64-w64-mingw32/bin/SDL2_mixer.dll"
       DESTINATION "."
     )
     install(FILES "${PROJECT_SOURCE_DIR}/SDL2_ttf-2.0.15/x86_64-w64-mingw32/bin/SDL2_ttf.dll"
@@ -925,9 +944,9 @@ if(CPACK)
     # -G DEB
     set(CPACK_PACKAGE_CONTACT "anders@jenbo.dk")
     if(USE_SDL1)
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsdl1.2debian, libsdl-mixer1.2, libsdl-ttf2.0-0")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsdl1.2debian, libsdl-ttf2.0-0")
     else()
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsdl2-2.0-0, libsdl2-mixer-2.0-0, libsdl2-ttf-2.0-0")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsdl2-2.0-0, libsdl2-ttf-2.0-0")
     endif()
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 

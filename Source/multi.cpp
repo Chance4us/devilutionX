@@ -25,7 +25,7 @@ namespace devilution {
 bool gbSomebodyWonGameKludge;
 TBuffer sgHiPriBuf;
 char szPlayerDescript[128];
-WORD sgwPackPlrOffsetTbl[MAX_PLRS];
+uint16_t sgwPackPlrOffsetTbl[MAX_PLRS];
 PkPlayerStruct netplr[MAX_PLRS];
 bool sgbPlayerTurnBitTbl[MAX_PLRS];
 bool sgbPlayerLeftGameTbl[MAX_PLRS];
@@ -49,7 +49,7 @@ bool sgbTimeout;
 char szPlayerName[128];
 BYTE gbDeltaSender;
 bool sgbNetInited;
-int player_state[MAX_PLRS];
+uint32_t player_state[MAX_PLRS];
 
 /**
  * Contains the set of supported event types supported by the multiplayer
@@ -119,7 +119,7 @@ static void NetRecvPlrData(TPkt *pkt)
 {
 	const Point target = plr[myplr].GetTargetPosition();
 
-	pkt->hdr.wCheck = LOAD_BE32("\0\0ip");
+	pkt->hdr.wCheck = LoadBE32("\0\0ip");
 	pkt->hdr.px = plr[myplr].position.tile.x;
 	pkt->hdr.py = plr[myplr].position.tile.y;
 	pkt->hdr.targx = target.x;
@@ -328,7 +328,7 @@ static void multi_check_drop_player()
 
 static void multi_begin_timeout()
 {
-	int i, nTicks, nState, nLowestActive, nLowestPlayer;
+	int i, nTicks, nLowestActive, nLowestPlayer;
 	BYTE bGroupPlayers, bGroupCount;
 
 	if (!sgbTimeout) {
@@ -354,7 +354,7 @@ static void multi_begin_timeout()
 	bGroupPlayers = 0;
 	bGroupCount = 0;
 	for (i = 0; i < MAX_PLRS; i++) {
-		nState = player_state[i];
+		uint32_t nState = player_state[i];
 		if ((nState & PS_CONNECTED) != 0) {
 			if (nLowestPlayer == -1) {
 				nLowestPlayer = i;
@@ -472,7 +472,7 @@ void multi_process_network_packets()
 			continue;
 		if (dwID < 0 || dwID >= MAX_PLRS)
 			continue;
-		if (pkt->wCheck != LOAD_BE32("\0\0ip"))
+		if (pkt->wCheck != LoadBE32("\0\0ip"))
 			continue;
 		if (pkt->wLen != dwMsgSize)
 			continue;
@@ -528,7 +528,7 @@ void multi_send_zero_packet(int pnum, _cmd_id bCmd, BYTE *pbSrc, DWORD dwLen)
 	dwOffset = 0;
 
 	while (dwLen != 0) {
-		pkt.hdr.wCheck = LOAD_BE32("\0\0ip");
+		pkt.hdr.wCheck = LoadBE32("\0\0ip");
 		pkt.hdr.px = 0;
 		pkt.hdr.py = 0;
 		pkt.hdr.targx = 0;
@@ -880,8 +880,8 @@ void recv_plrinfo(int pnum, TCmdPlrInfoHdr *p, bool recv)
 			LoadPlrGFX(pnum, PFILE_DEATH);
 			plr[pnum]._pmode = PM_DEATH;
 			NewPlrAnim(pnum, plr[pnum]._pDAnim[DIR_S], plr[pnum]._pDFrames, 1, plr[pnum]._pDWidth);
-			plr[pnum]._pAnimFrame = plr[pnum]._pAnimLen - 1;
-			plr[pnum].actionFrame = 2 * plr[pnum]._pAnimLen;
+			plr[pnum].AnimInfo.CurrentFrame = plr[pnum].AnimInfo.NumberOfFrames - 1;
+			plr[pnum].actionFrame = 2 * plr[pnum].AnimInfo.NumberOfFrames;
 			dFlags[plr[pnum].position.tile.x][plr[pnum].position.tile.y] |= BFLAG_DEAD_PLAYER;
 		}
 	}

@@ -350,7 +350,7 @@ void CheckCursMove()
 		CheckPanelInfo();
 		return;
 	}
-	if (doomflag) {
+	if (DoomFlag) {
 		return;
 	}
 	if (invflag && MouseX > RIGHT_PANEL && MouseY <= SPANEL_HEIGHT) {

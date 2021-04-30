@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "nthread.h"
-#include "player.h"
+#include "engine/animationinfo.h"
 
 using namespace devilution;
 
@@ -53,8 +53,8 @@ struct RenderingData : TestData {
 void RunAnimationTest(int numFrames, int delay, AnimationDistributionParams params, int numSkippedFrames, int distributeFramesBeforeFrame, const std::vector<TestData *> &vecTestData)
 {
 	const int pnum = 0;
-	PlayerStruct *pPlayer = &plr[pnum];
-	NewPlrAnim(pnum, nullptr, numFrames, delay, 128, params, numSkippedFrames, distributeFramesBeforeFrame);
+	AnimationInfo animInfo;
+	animInfo.SetNewAnimation(nullptr, numFrames, delay, params, numSkippedFrames, distributeFramesBeforeFrame);
 
 	int currentGameTick = 0;
 	for (TestData *x : vecTestData) {
@@ -62,20 +62,20 @@ void RunAnimationTest(int numFrames, int delay, AnimationDistributionParams para
 		if (gameTickData != nullptr) {
 			currentGameTick += 1;
 			if (gameTickData->_FramesToSkip != 0)
-				pPlayer->_pAnimFrame += gameTickData->_FramesToSkip;
-			ProcessPlayerAnimation(pnum);
-			EXPECT_EQ(pPlayer->_pAnimFrame, gameTickData->_ExpectedAnimationFrame);
-			EXPECT_EQ(pPlayer->_pAnimCnt, gameTickData->_ExpectedAnimationCnt);
+				animInfo.CurrentFrame += gameTickData->_FramesToSkip;
+			animInfo.ProcessAnimation();
+			EXPECT_EQ(animInfo.CurrentFrame, gameTickData->_ExpectedAnimationFrame);
+			EXPECT_EQ(animInfo.DelayCounter, gameTickData->_ExpectedAnimationCnt);
 		}
 
 		auto renderingData = dynamic_cast<RenderingData *>(x);
 		if (renderingData != nullptr) {
 			gfProgressToNextGameTick = renderingData->_fProgressToNextGameTick;
-			EXPECT_EQ(GetFrameToUseForPlayerRendering(pPlayer), renderingData->_ExpectedRenderingFrame)
+			EXPECT_EQ(animInfo.GetFrameToUseForRendering(), renderingData->_ExpectedRenderingFrame)
 			    << std::fixed << std::setprecision(2)
 			    << "ProgressToNextGameTick: " << renderingData->_fProgressToNextGameTick
-			    << " AnimFrame: " << pPlayer->_pAnimFrame
-			    << " AnimCnt: " << pPlayer->_pAnimCnt
+			    << " CurrentFrame: " << animInfo.CurrentFrame
+			    << " DelayCounter: " << animInfo.DelayCounter
 			    << " GameTick: " << currentGameTick;
 		}
 	}
@@ -84,11 +84,11 @@ void RunAnimationTest(int numFrames, int delay, AnimationDistributionParams para
 	}
 }
 
-TEST(AnimationInformation, AttackSwordWarrior) // ProcessAnimationPending should be considered by distribution logic
+TEST(AnimationInfo, AttackSwordWarrior) // ProcessAnimationPending should be considered by distribution logic
 {
 	RunAnimationTest(16, 0, AnimationDistributionParams::ProcessAnimationPending, 0, 9,
 	    {
-	        // ProcessPlayer directly after StartAttack (in same GameTick). So we don't see any rendering before.
+	        // ProcessAnimation directly after StartAttack (in same GameTick). So we don't see any rendering before.
 	        new GameTickData(2, 0),
 	        new RenderingData(0.0f, 1),
 	        new RenderingData(0.3f, 1),
@@ -125,7 +125,7 @@ TEST(AnimationInformation, AttackSwordWarrior) // ProcessAnimationPending should
 	        new RenderingData(0.6f, 8),
 	        new RenderingData(0.8f, 8),
 
-			// After this GameTick, the Animation Distribution Logic is disabled
+	        // After this GameTick, the Animation Distribution Logic is disabled
 	        new GameTickData(9, 0),
 	        new RenderingData(0.1f, 9),
 	        new GameTickData(10, 0),
@@ -142,15 +142,15 @@ TEST(AnimationInformation, AttackSwordWarrior) // ProcessAnimationPending should
 	        new RenderingData(0.6f, 15),
 	        new GameTickData(16, 0),
 	        new RenderingData(0.6f, 16),
-	        // Animation stopped cause PM_DoAttack would stop the Animation "if (plr[pnum]._pAnimFrame == plr[pnum]._pAFrames) {"
+	        // Animation stopped cause PM_DoAttack would stop the Animation "if (plr[pnum].AnimInfo.CurrentFrame == plr[pnum]._pAFrames) {"
 	    });
 }
 
-TEST(AnimationInformation, AttackSwordWarriorWithFastestAttack) // Skipped frames and ProcessAnimationPending should be considered by distribution logic
+TEST(AnimationInfo, AttackSwordWarriorWithFastestAttack) // Skipped frames and ProcessAnimationPending should be considered by distribution logic
 {
 	RunAnimationTest(16, 0, AnimationDistributionParams::ProcessAnimationPending, 2, 9,
 	    {
-	        // ProcessPlayer directly after StartAttack (in same GameTick). So we don't see any rendering before.
+	        // ProcessAnimation directly after StartAttack (in same GameTick). So we don't see any rendering before.
 	        new GameTickData(2, 0),
 	        new RenderingData(0.0f, 1),
 	        new RenderingData(0.3f, 1),
@@ -177,7 +177,7 @@ TEST(AnimationInformation, AttackSwordWarriorWithFastestAttack) // Skipped frame
 	        new RenderingData(0.6f, 8),
 	        new RenderingData(0.8f, 8),
 
-			// After this GameTick, the Animation Distribution Logic is disabled
+	        // After this GameTick, the Animation Distribution Logic is disabled
 	        new GameTickData(9, 0),
 	        new RenderingData(0.1f, 9),
 	        new GameTickData(10, 0),
@@ -194,11 +194,11 @@ TEST(AnimationInformation, AttackSwordWarriorWithFastestAttack) // Skipped frame
 	        new RenderingData(0.6f, 15),
 	        new GameTickData(16, 0),
 	        new RenderingData(0.6f, 16),
-	        // Animation stopped cause PM_DoAttack would stop the Animation "if (plr[pnum]._pAnimFrame == plr[pnum]._pAFrames) {"
+	        // Animation stopped cause PM_DoAttack would stop the Animation "if (plr[pnum].AnimInfo.CurrentFrame == plr[pnum]._pAFrames) {"
 	    });
 }
 
-TEST(AnimationInformation, BlockingWarriorNormal) // Ignored delay for last Frame should be considered by distribution logic
+TEST(AnimationInfo, BlockingWarriorNormal) // Ignored delay for last Frame should be considered by distribution logic
 {
 	RunAnimationTest(2, 2, AnimationDistributionParams::SkipsDelayOfLastFrame, 0, 0,
 	    {
@@ -221,11 +221,11 @@ TEST(AnimationInformation, BlockingWarriorNormal) // Ignored delay for last Fram
 	        new RenderingData(0.3f, 2),
 	        new RenderingData(0.6f, 2),
 	        new RenderingData(0.8f, 2),
-	        // Animation stopped cause PM_DoBlock would stop the Animation "if (plr[pnum]._pAnimFrame >= plr[pnum]._pBFrames) {"
+	        // Animation stopped cause PM_DoBlock would stop the Animation "if (plr[pnum].AnimInfo.CurrentFrame >= plr[pnum]._pBFrames) {"
 	    });
 }
 
-TEST(AnimationInformation, BlockingSorcererWithFastBlock) // Skipped frames and ignored delay for last Frame should be considered by distribution logic
+TEST(AnimationInfo, BlockingSorcererWithFastBlock) // Skipped frames and ignored delay for last Frame should be considered by distribution logic
 {
 	RunAnimationTest(6, 2, AnimationDistributionParams::SkipsDelayOfLastFrame, 4, 0,
 	    {
@@ -248,11 +248,11 @@ TEST(AnimationInformation, BlockingSorcererWithFastBlock) // Skipped frames and 
 	        new RenderingData(0.3f, 5),
 	        new RenderingData(0.6f, 6),
 	        new RenderingData(0.8f, 6),
-	        // Animation stopped cause PM_DoBlock would stop the Animation "if (plr[pnum]._pAnimFrame >= plr[pnum]._pBFrames) {"
+	        // Animation stopped cause PM_DoBlock would stop the Animation "if (plr[pnum].AnimInfo.CurrentFrame >= plr[pnum]._pBFrames) {"
 	    });
 }
 
-TEST(AnimationInformation, HitRecoverySorcererZenMode) // Skipped frames and ignored delay for last Frame should be considered by distribution logic
+TEST(AnimationInfo, HitRecoverySorcererZenMode) // Skipped frames and ignored delay for last Frame should be considered by distribution logic
 {
 	RunAnimationTest(8, 0, AnimationDistributionParams::None, 4, 0,
 	    {
@@ -275,10 +275,10 @@ TEST(AnimationInformation, HitRecoverySorcererZenMode) // Skipped frames and ign
 	        new RenderingData(0.3f, 7),
 	        new RenderingData(0.6f, 8),
 	        new RenderingData(0.8f, 8),
-	        // Animation stopped cause PM_DoGotHit would stop the Animation "if (plr[pnum]._pAnimFrame >= plr[pnum]._pHFrames) {"
+	        // Animation stopped cause PM_DoGotHit would stop the Animation "if (plr[pnum].AnimInfo.CurrentFrame >= plr[pnum]._pHFrames) {"
 	    });
 }
-TEST(AnimationInformation, Stand) // Distribution Logic shouldn't change anything here
+TEST(AnimationInfo, Stand) // Distribution Logic shouldn't change anything here
 {
 	RunAnimationTest(10, 3, AnimationDistributionParams::None, 0, 0,
 	    {
@@ -371,7 +371,7 @@ TEST(AnimationInformation, Stand) // Distribution Logic shouldn't change anythin
 	        new GameTickData(10, 3),
 	        new RenderingData(0.6f, 10),
 
-			// Animation starts again
+	        // Animation starts again
 	        new GameTickData(1, 0),
 	        new RenderingData(0.1f, 1),
 	        new GameTickData(1, 1),

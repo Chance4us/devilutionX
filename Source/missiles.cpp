@@ -675,7 +675,7 @@ bool MonsterMHit(int pnum, int m, int mindam, int maxdam, int dist, int t, bool 
 		}
 
 		if (monster[m]._msquelch == 0) {
-			monster[m]._msquelch = UCHAR_MAX;
+			monster[m]._msquelch = UINT8_MAX;
 			monster[m].position.last = plr[pnum].position.tile;
 		}
 		return true;
@@ -2331,9 +2331,9 @@ void AddTown(int mi, int sx, int sy, int dx, int dy, int midir, int8_t mienemy, 
 	PutMissile(mi);
 	if (id == myplr && !missile[mi]._miDelFlag && currlevel != 0) {
 		if (!setlevel) {
-			NetSendCmdLocParam3(true, CMD_ACTIVATEPORTAL, tx, ty, currlevel, leveltype, 0);
+			NetSendCmdLocParam3(true, CMD_ACTIVATEPORTAL, { tx, ty }, currlevel, leveltype, 0);
 		} else {
-			NetSendCmdLocParam3(true, CMD_ACTIVATEPORTAL, tx, ty, setlvlnum, leveltype, 1);
+			NetSendCmdLocParam3(true, CMD_ACTIVATEPORTAL, { tx, ty }, setlvlnum, leveltype, 1);
 		}
 	}
 }
@@ -2684,7 +2684,7 @@ void AddGolem(int mi, int sx, int sy, int dx, int dy, int midir, int8_t mienemy,
 	missile[mi]._miVar2 = sy;
 	missile[mi]._miVar4 = dx;
 	missile[mi]._miVar5 = dy;
-	if ((monster[id].position.tile.x != 1 || monster[id].position.tile.y) && id == myplr)
+	if ((monster[id].position.tile.x != 1 || monster[id].position.tile.y != 0) && id == myplr)
 		M_StartKill(id, id);
 	UseMana(id, SPL_GOLEM);
 }
@@ -2963,7 +2963,7 @@ void AddDisarm(int mi, int sx, int sy, int dx, int dy, int midir, int8_t mienemy
 		NewCursor(CURSOR_DISARM);
 		if (sgbControllerActive) {
 			if (pcursobj != -1)
-				NetSendCmdLocParam1(true, CMD_DISARMXY, cursmx, cursmy, pcursobj);
+				NetSendCmdLocParam1(true, CMD_DISARMXY, { cursmx, cursmy }, pcursobj);
 			else
 				NewCursor(CURSOR_HAND);
 		}
@@ -3333,7 +3333,7 @@ void MI_LArrow(int i)
 			maxd = GenerateRnd(10) + 1 + currlevel * 2;
 		}
 
-		if (missile[i].position.tile.x != missile[i].position.start.x || missile[i].position.tile.y != missile[i].position.start.y) {
+		if (missile[i].position.tile != missile[i].position.start) {
 			missile_resistance rst = missiledata[missile[i]._mitype].mResist;
 			missiledata[missile[i]._mitype].mResist = MISR_NONE;
 			CheckMissileCol(i, mind, maxd, false, missile[i].position.tile.x, missile[i].position.tile.y, false);
@@ -3386,7 +3386,7 @@ void MI_Arrow(int i)
 		mind = currlevel;
 		maxd = 2 * currlevel;
 	}
-	if (missile[i].position.tile.x != missile[i].position.start.x || missile[i].position.tile.y != missile[i].position.start.y)
+	if (missile[i].position.tile != missile[i].position.start)
 		CheckMissileCol(i, mind, maxd, false, missile[i].position.tile.x, missile[i].position.tile.y, false);
 	if (missile[i]._mirange == 0)
 		missile[i]._miDelFlag = true;
@@ -3425,7 +3425,7 @@ void MI_Firebolt(int i)
 		} else {
 			d = currlevel + GenerateRnd(2 * currlevel);
 		}
-		if (missile[i].position.tile.x != missile[i].position.start.x || missile[i].position.tile.y != missile[i].position.start.y) {
+		if (missile[i].position.tile != missile[i].position.start) {
 			CheckMissileCol(i, d, d, false, missile[i].position.tile.x, missile[i].position.tile.y, false);
 		}
 		if (missile[i]._mirange == 0) {
@@ -3600,7 +3600,7 @@ void FireballUpdate(int i, int xof, int yof, bool alwaysDelete)
 		missile[i].position.traveled.x += xof;
 		missile[i].position.traveled.y += yof;
 		GetMissilePos(i);
-		if (missile[i].position.tile.x != missile[i].position.start.x || missile[i].position.tile.y != missile[i].position.start.y)
+		if (missile[i].position.tile != missile[i].position.start)
 			CheckMissileCol(i, dam, dam, false, missile[i].position.tile.x, missile[i].position.tile.y, false);
 		if (missile[i]._mirange == 0) {
 			int mx = missile[i].position.tile.x;
@@ -4190,7 +4190,7 @@ void MI_Lightning(int i)
 
 	missile[i]._mirange--;
 	j = missile[i]._mirange;
-	if (missile[i].position.tile.x != missile[i].position.start.x || missile[i].position.tile.y != missile[i].position.start.y)
+	if (missile[i].position.tile != missile[i].position.start)
 		CheckMissileCol(i, missile[i]._midam, missile[i]._midam, true, missile[i].position.tile.x, missile[i].position.tile.y, false);
 	if (missile[i]._miHitFlag)
 		missile[i]._mirange = j;
@@ -4218,7 +4218,7 @@ void MI_Town(int i)
 	}
 
 	for (p = 0; p < MAX_PLRS; p++) {
-		if (plr[p].plractive && currlevel == plr[p].plrlevel && !plr[p]._pLvlChanging && plr[p]._pmode == PM_STAND && plr[p].position.tile.x == missile[i].position.tile.x && plr[p].position.tile.y == missile[i].position.tile.y) {
+		if (plr[p].plractive && currlevel == plr[p].plrlevel && !plr[p]._pLvlChanging && plr[p]._pmode == PM_STAND && plr[p].position.tile == missile[i].position.tile) {
 			ClrPlrPath(p);
 			if (p == myplr) {
 				NetSendCmdParam1(true, CMD_WARP, missile[i]._misource);
@@ -4619,7 +4619,7 @@ void MI_Stone(int i)
 		if (monster[m]._mhitpoints > 0)
 			monster[m]._mmode = (MON_MODE)missile[i]._miVar1;
 		else
-			AddDead(monster[m].position.tile.x, monster[m].position.tile.y, stonendx, monster[m]._mdir);
+			AddDead(monster[m].position.tile, stonendx, monster[m]._mdir);
 	}
 	if (missile[i]._miAnimType == MFILE_SHATTER1)
 		PutMissile(i);
@@ -5013,7 +5013,7 @@ void MI_Hbolt(int i)
 		missile[i].position.traveled.y += missile[i].position.velocity.y;
 		GetMissilePos(i);
 		dam = missile[i]._midam;
-		if (missile[i].position.tile.x != missile[i].position.start.x || missile[i].position.tile.y != missile[i].position.start.y) {
+		if (missile[i].position.tile != missile[i].position.start) {
 			CheckMissileCol(i, dam, dam, false, missile[i].position.tile.x, missile[i].position.tile.y, false);
 		}
 		if (missile[i]._mirange == 0) {

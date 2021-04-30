@@ -63,7 +63,7 @@ T SwapBE(T in)
 }
 
 class LoadHelper {
-	uint8_t *m_buffer;
+	std::unique_ptr<uint8_t[]> m_buffer;
 	uint32_t m_cur = 0;
 	uint32_t m_size;
 
@@ -128,25 +128,20 @@ public:
 	{
 		return next<uint32_t>() != 0;
 	}
-
-	~LoadHelper()
-	{
-		mem_free_dbg(m_buffer);
-	}
 };
 
 class SaveHelper {
 	const char *m_szFileName;
-	uint8_t *m_buffer;
+	std::unique_ptr<uint8_t[]> m_buffer;
 	uint32_t m_cur = 0;
 	uint32_t m_capacity;
 
 public:
 	SaveHelper(const char *szFileName, size_t bufferLen)
+		: m_szFileName(szFileName)
+		, m_buffer(std::make_unique<uint8_t[]>(codec_get_encoded_len(bufferLen)))
+		, m_capacity(bufferLen)
 	{
-		m_szFileName = szFileName;
-		m_capacity = bufferLen;
-		m_buffer = DiabloAllocPtr(codec_get_encoded_len(m_capacity));
 	}
 
 	bool isValid(uint32_t len = 1)
@@ -187,11 +182,8 @@ public:
 	{
 		const auto encoded_len = codec_get_encoded_len(m_cur);
 		const char *const password = pfile_get_password();
-		codec_encode(m_buffer, m_cur, encoded_len, password);
-		mpqapi_write_file(m_szFileName, m_buffer, encoded_len);
-
-		mem_free_dbg(m_buffer);
-		m_buffer = nullptr;
+		codec_encode(m_buffer.get(), m_cur, encoded_len, password);
+		mpqapi_write_file(m_szFileName, m_buffer.get(), encoded_len);
 	}
 };
 
@@ -342,11 +334,11 @@ static void LoadPlayer(LoadHelper *file, int p)
 	pPlayer->_pdir = static_cast<direction>(file->nextLE<int32_t>());
 	file->skip(4); // Unused
 	pPlayer->_pgfxnum = file->nextLE<int32_t>();
-	file->skip(4); // Skip pointer _pAnimData
-	pPlayer->_pAnimDelay = file->nextLE<int32_t>();
-	pPlayer->_pAnimCnt = file->nextLE<int32_t>();
-	pPlayer->_pAnimLen = file->nextLE<int32_t>();
-	pPlayer->_pAnimFrame = file->nextLE<int32_t>();
+	file->skip(4); // Skip pointer pData
+	pPlayer->AnimInfo.DelayLen = file->nextLE<int32_t>();
+	pPlayer->AnimInfo.DelayCounter = file->nextLE<int32_t>();
+	pPlayer->AnimInfo.NumberOfFrames = file->nextLE<int32_t>();
+	pPlayer->AnimInfo.CurrentFrame = file->nextLE<int32_t>();
 	pPlayer->_pAnimWidth = file->nextLE<int32_t>();
 	// Skip _pAnimWidth2
 	file->skip(4);
@@ -842,15 +834,15 @@ int RemapItemIdxToDiablo(int i)
 bool IsHeaderValid(uint32_t magicNumber)
 {
 	gbIsHellfireSaveGame = false;
-	if (magicNumber == LOAD_LE32("SHAR")) {
+	if (magicNumber == LoadLE32("SHAR")) {
 		return true;
 	}
-	if (magicNumber == LOAD_LE32("SHLF")) {
+	if (magicNumber == LoadLE32("SHLF")) {
 		gbIsHellfireSaveGame = true;
 		return true;
-	} else if (!gbIsSpawn && magicNumber == LOAD_LE32("RETL")) {
+	} else if (!gbIsSpawn && magicNumber == LoadLE32("RETL")) {
 		return true;
-	} else if (!gbIsSpawn && magicNumber == LOAD_LE32("HELF")) {
+	} else if (!gbIsSpawn && magicNumber == LoadLE32("HELF")) {
 		gbIsHellfireSaveGame = true;
 		return true;
 	}
@@ -1327,10 +1319,10 @@ static void SavePlayer(SaveHelper *file, int p)
 	file->skip(4); // Unused
 	file->writeLE<int32_t>(pPlayer->_pgfxnum);
 	file->skip(4); // Skip pointer _pAnimData
-	file->writeLE<int32_t>(pPlayer->_pAnimDelay);
-	file->writeLE<int32_t>(pPlayer->_pAnimCnt);
-	file->writeLE<int32_t>(pPlayer->_pAnimLen);
-	file->writeLE<int32_t>(pPlayer->_pAnimFrame);
+	file->writeLE<int32_t>(pPlayer->AnimInfo.DelayLen);
+	file->writeLE<int32_t>(pPlayer->AnimInfo.DelayCounter);
+	file->writeLE<int32_t>(pPlayer->AnimInfo.NumberOfFrames);
+	file->writeLE<int32_t>(pPlayer->AnimInfo.CurrentFrame);
 	file->writeLE<int32_t>(pPlayer->_pAnimWidth);
 	// write _pAnimWidth2 for vanilla compatibility
 	file->writeLE<int32_t>(CalculateWidth2(pPlayer->_pAnimWidth));
@@ -1580,10 +1572,10 @@ static void SaveMonster(SaveHelper *file, int i)
 	file->skip(1); // Alignment
 	file->writeLE<uint16_t>(pMonster->mExp);
 
-	file->writeLE<uint8_t>(pMonster->mHit < UCHAR_MAX ? pMonster->mHit : UCHAR_MAX); // For backwards compatibility
+	file->writeLE<uint8_t>(pMonster->mHit < UINT8_MAX ? pMonster->mHit : UINT8_MAX); // For backwards compatibility
 	file->writeLE<uint8_t>(pMonster->mMinDamage);
 	file->writeLE<uint8_t>(pMonster->mMaxDamage);
-	file->writeLE<uint8_t>(pMonster->mHit2 < UCHAR_MAX ? pMonster->mHit2 : UCHAR_MAX); // For backwards compatibility
+	file->writeLE<uint8_t>(pMonster->mHit2 < UINT8_MAX ? pMonster->mHit2 : UINT8_MAX); // For backwards compatibility
 	file->writeLE<uint8_t>(pMonster->mMinDamage2);
 	file->writeLE<uint8_t>(pMonster->mMaxDamage2);
 	file->writeLE<uint8_t>(pMonster->mArmorClass);
@@ -1783,13 +1775,13 @@ void SaveGameData()
 	SaveHelper file("game", FILEBUFF);
 
 	if (gbIsSpawn && !gbIsHellfire)
-		file.writeLE<uint32_t>(LOAD_LE32("SHAR"));
+		file.writeLE<uint32_t>(LoadLE32("SHAR"));
 	else if (gbIsSpawn && gbIsHellfire)
-		file.writeLE<uint32_t>(LOAD_LE32("SHLF"));
+		file.writeLE<uint32_t>(LoadLE32("SHLF"));
 	else if (!gbIsSpawn && gbIsHellfire)
-		file.writeLE<uint32_t>(LOAD_LE32("HELF"));
+		file.writeLE<uint32_t>(LoadLE32("HELF"));
 	else if (!gbIsSpawn && !gbIsHellfire)
-		file.writeLE<uint32_t>(LOAD_LE32("RETL"));
+		file.writeLE<uint32_t>(LoadLE32("RETL"));
 	else
 		app_fatal(_("Invalid game state"));
 

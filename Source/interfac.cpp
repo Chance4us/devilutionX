@@ -160,7 +160,7 @@ static void InitCutscene(interface_mode uMsg)
 	sgdwProgress = 0;
 }
 
-static void DrawProgress(CelOutputBuffer out, int x, int y, int progress_id)
+static void DrawProgress(const CelOutputBuffer &out, int x, int y, int progress_id)
 {
 	BYTE *dst = out.at(x, y);
 	for (int i = 0; i < 22; ++i, dst += out.pitch()) {
@@ -171,7 +171,7 @@ static void DrawProgress(CelOutputBuffer out, int x, int y, int progress_id)
 static void DrawCutscene()
 {
 	lock_buf(1);
-	CelOutputBuffer out = GlobalBackBuffer();
+	const CelOutputBuffer &out = GlobalBackBuffer();
 	DrawArt(out, PANEL_X - (ArtCutsceneWidescreen.w() - PANEL_WIDTH) / 2, UI_OFFSET_Y, &ArtCutsceneWidescreen);
 	CelDrawTo(out, PANEL_X, 480 - 1 + UI_OFFSET_Y, sgpBackCel, 1, 640);
 
@@ -190,7 +190,7 @@ static void DrawCutscene()
 
 void interface_msg_pump()
 {
-	MSG Msg;
+	tagMSG Msg;
 
 	while (FetchMessage(&Msg)) {
 		if (Msg.message != DVL_WM_QUIT) {
@@ -385,7 +385,7 @@ void ShowProgress(interface_mode uMsg)
 	saveProc = SetWindowProc(saveProc);
 	assert(saveProc == DisableInputWndProc);
 
-	NetSendCmdLocParam1(true, CMD_PLAYER_JOINLEVEL, plr[myplr].position.tile.x, plr[myplr].position.tile.y, plr[myplr].plrlevel);
+	NetSendCmdLocParam1(true, CMD_PLAYER_JOINLEVEL, plr[myplr].position.tile, plr[myplr].plrlevel);
 	plrmsg_delay(false);
 	ResetPal();
 

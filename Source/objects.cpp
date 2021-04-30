@@ -24,6 +24,7 @@
 #include "towners.h"
 #include "track.h"
 #include "utils/language.h"
+#include "utils/log.hpp"
 
 namespace devilution {
 
@@ -1276,10 +1277,15 @@ void SetupObject(int i, int x, int y, _object_id ot)
 	object[i]._otype = ot;
 	object_graphic_id ofi = AllObjects[ot].ofindex;
 	object[i].position = { x, y };
-	int j = 0;
-	while (ObjFileList[j] != ofi) {
-		j++;
+
+	const auto &found = std::find(std::begin(ObjFileList), std::end(ObjFileList), ofi);
+	if (found == std::end(ObjFileList)) {
+		LogCritical("Unable to find object_graphic_id {} in list of objects to load, level generation error.", ofi);
+		return;
 	}
+
+	const int j = std::distance(std::begin(ObjFileList), found);
+
 	object[i]._oAnimData = pObjCels[j];
 	object[i]._oAnimFlag = AllObjects[ot].oAnimFlag;
 	if (AllObjects[ot].oAnimFlag != 0) {
@@ -2249,7 +2255,7 @@ void ProcessObjects()
 
 void ObjSetMicro(int dx, int dy, int pn)
 {
-	WORD *v;
+	uint16_t *v;
 	MICROS *defs;
 	int i;
 
@@ -2257,12 +2263,12 @@ void ObjSetMicro(int dx, int dy, int pn)
 	pn--;
 	defs = &dpiece_defs_map_2[dx][dy];
 	if (leveltype != DTYPE_HELL) {
-		v = (WORD *)pLevelPieces + 10 * pn;
+		v = (uint16_t *)pLevelPieces + 10 * pn;
 		for (i = 0; i < 10; i++) {
 			defs->mt[i] = SDL_SwapLE16(v[(i & 1) - (i & 0xE) + 8]);
 		}
 	} else {
-		v = (WORD *)pLevelPieces + 16 * pn;
+		v = (uint16_t *)pLevelPieces + 16 * pn;
 		for (i = 0; i < 16; i++) {
 			defs->mt[i] = SDL_SwapLE16(v[(i & 1) - (i & 0xE) + 14]);
 		}
@@ -2276,8 +2282,8 @@ void objects_set_door_piece(int x, int y)
 
 	pn = dPiece[x][y] - 1;
 
-	v1 = *((WORD *)pLevelPieces + 10 * pn + 8);
-	v2 = *((WORD *)pLevelPieces + 10 * pn + 9);
+	v1 = *((uint16_t *)pLevelPieces + 10 * pn + 8);
+	v2 = *((uint16_t *)pLevelPieces + 10 * pn + 9);
 	dpiece_defs_map_2[x][y].mt[0] = SDL_SwapLE16(v1);
 	dpiece_defs_map_2[x][y].mt[1] = SDL_SwapLE16(v2);
 }
@@ -2286,9 +2292,8 @@ void ObjSetMini(int x, int y, int v)
 {
 	int xx, yy;
 	long v1, v2, v3, v4;
-	WORD *MegaTiles;
 
-	MegaTiles = (WORD *)&pMegaTiles[((WORD)v - 1) * 8];
+	uint16_t *MegaTiles = (uint16_t *)&pMegaTiles[((uint16_t)v - 1) * 8];
 	v1 = SDL_SwapLE16(*(MegaTiles + 0)) + 1;
 	v2 = SDL_SwapLE16(*(MegaTiles + 1)) + 1;
 	v3 = SDL_SwapLE16(*(MegaTiles + 2)) + 1;
@@ -4536,7 +4541,7 @@ void OperateBookCase(int pnum, int i, bool sendmsg)
 			if (QuestStatus(Q_ZHAR)
 			    && monster[MAX_PLRS]._mmode == MM_STAND // prevents playing the "angry" message for the second time if zhar got aggroed by losing vision and talking again
 			    && monster[MAX_PLRS]._uniqtype - 1 == UMT_ZHAR
-			    && monster[MAX_PLRS]._msquelch == UCHAR_MAX
+			    && monster[MAX_PLRS]._msquelch == UINT8_MAX
 			    && monster[MAX_PLRS]._mhitpoints) {
 				monster[MAX_PLRS].mtalkmsg = TEXT_ZHAR2;
 				M_StartStand(0, monster[MAX_PLRS]._mdir);
@@ -5418,10 +5423,14 @@ void SyncL3Doors(int i)
 void SyncObjectAnim(int o)
 {
 	object_graphic_id index = AllObjects[object[o]._otype].ofindex;
-	int i = 0;
-	while (ObjFileList[i] != index) {
-		i++;
+
+	const auto &found = std::find(std::begin(ObjFileList), std::end(ObjFileList), index);
+	if (found == std::end(ObjFileList)) {
+		LogCritical("Unable to find object_graphic_id {} in list of objects to load, level generation error.", index);
+		return;
 	}
+
+	const int i = std::distance(std::begin(ObjFileList), found);
 
 	object[o]._oAnimData = pObjCels[i];
 	switch (object[o]._otype) {
@@ -5526,15 +5535,15 @@ void GetObjectStr(int i)
 	case OBJ_BARREL:
 	case OBJ_BARRELEX:
 		if (currlevel >= 17 && currlevel <= 20)      // for hive levels
-			strcpy(infostr, _("Pod"));                  //Then a barrel is called a pod
+			strcpy(infostr, _("Pod"));               //Then a barrel is called a pod
 		else if (currlevel >= 21 && currlevel <= 24) // for crypt levels
-			strcpy(infostr, _("Urn"));                  //Then a barrel is called an urn
+			strcpy(infostr, _("Urn"));               //Then a barrel is called an urn
 		else
 			strcpy(infostr, _("Barrel"));
 		break;
 	case OBJ_SHRINEL:
 	case OBJ_SHRINER:
-		sprintf(tempstr, _("%s Shrine"), shrinestrs[object[i]._oVar1]);
+		sprintf(tempstr, _("%s Shrine"), _(shrinestrs[object[i]._oVar1]));
 		strcpy(infostr, tempstr);
 		break;
 	case OBJ_SKELBOOK:
@@ -5584,7 +5593,7 @@ void GetObjectStr(int i)
 		strcpy(infostr, _("Pedestal of Blood"));
 		break;
 	case OBJ_STORYBOOK:
-		strcpy(infostr, StoryBookName[object[i]._oVar3]);
+		strcpy(infostr, _(StoryBookName[object[i]._oVar3]));
 		break;
 	case OBJ_WEAPONRACK:
 		strcpy(infostr, _("Weapon Rack"));

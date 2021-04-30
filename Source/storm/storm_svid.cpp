@@ -5,8 +5,14 @@
 #include <cstring>
 
 #include <SDL.h>
-#include <SDL_mixer.h>
 #include <smacker.h>
+
+#ifndef NOSOUND
+#include <Aulib/Stream.h>
+#include <Aulib/ResamplerSpeex.h>
+
+#include "utils/push_aulib_decoder.h"
+#endif
 
 #include "dx.h"
 #include "options.h"
@@ -16,24 +22,24 @@
 #include "utils/sdl_compat.h"
 #include "utils/log.hpp"
 
-#if !SDL_VERSION_ATLEAST(2, 0, 4)
-#include <queue>
-#endif
-
 namespace devilution {
 namespace {
+
+#ifndef NOSOUND
+std::optional<Aulib::Stream> SVidAudioStream;
+PushAulibDecoder *SVidAudioDecoder;
+std::uint8_t SVidAudioDepth;
+#endif
 
 unsigned long SVidWidth, SVidHeight;
 double SVidFrameEnd;
 double SVidFrameLength;
-char SVidAudioDepth;
-double SVidVolume;
 BYTE SVidLoop;
 smk SVidSMK;
 SDL_Color SVidPreviousPalette[256];
 SDL_Palette *SVidPalette;
 SDL_Surface *SVidSurface;
-BYTE *SVidBuffer;
+std::unique_ptr<uint8_t[]> SVidBuffer;
 
 bool IsLandscapeFit(unsigned long srcW, unsigned long srcH, unsigned long dstW, unsigned long dstH)
 {
@@ -99,130 +105,12 @@ void TrySetVideoModeToSVidForSDL1()
 }
 #endif
 
-#if !SDL_VERSION_ATLEAST(2, 0, 4)
+#ifndef NOSOUND
 bool HaveAudio()
 {
-	return SDL_GetAudioStatus() != SDL_AUDIO_STOPPED;
-}
-
-struct AudioQueueItem {
-	unsigned char *data;
-	unsigned long len;
-	const unsigned char *pos;
-};
-
-class AudioQueue {
-public:
-	static void Callback(void *userdata, Uint8 *out, int out_len)
-	{
-		static_cast<AudioQueue *>(userdata)->Dequeue(out, out_len);
-	}
-
-	void Subscribe(SDL_AudioSpec *spec)
-	{
-		spec->userdata = this;
-		spec->callback = AudioQueue::Callback;
-	}
-
-	void Enqueue(const unsigned char *data, unsigned long len)
-	{
-#if SDL_VERSION_ATLEAST(2, 0, 4)
-		SDL_LockAudioDevice(deviceId);
-		EnqueueUnsafe(data, len);
-		SDL_UnlockAudioDevice(deviceId);
-#else
-		SDL_LockAudio();
-		EnqueueUnsafe(data, len);
-		SDL_UnlockAudio();
-#endif
-	}
-
-	void Clear()
-	{
-		while (!queue_.empty())
-			Pop();
-	}
-
-private:
-	void EnqueueUnsafe(const unsigned char *data, unsigned long len)
-	{
-		AudioQueueItem item;
-		item.data = new unsigned char[len];
-		memcpy(item.data, data, len * sizeof(item.data[0]));
-		item.len = len;
-		item.pos = item.data;
-		queue_.push(item);
-	}
-
-	void Dequeue(Uint8 *out, int out_len)
-	{
-		SDL_memset(out, 0, sizeof(out[0]) * out_len);
-		AudioQueueItem *item;
-		while ((item = Next()) != NULL) {
-			if (static_cast<unsigned long>(out_len) <= item->len) {
-				SDL_MixAudio(out, item->pos, out_len, SDL_MIX_MAXVOLUME);
-				item->pos += out_len;
-				item->len -= out_len;
-				return;
-			}
-
-			SDL_MixAudio(out, item->pos, item->len, SDL_MIX_MAXVOLUME);
-			out += item->len;
-			out_len -= item->len;
-			Pop();
-		}
-	}
-
-	AudioQueueItem *Next()
-	{
-		while (!queue_.empty() && queue_.front().len == 0)
-			Pop();
-		if (queue_.empty())
-			return NULL;
-		return &queue_.front();
-	}
-
-	void Pop()
-	{
-		delete[] queue_.front().data;
-		queue_.pop();
-	}
-
-	std::queue<AudioQueueItem> queue_;
-};
-
-AudioQueue *sVidAudioQueue = new AudioQueue();
-#else // SDL_VERSION_ATLEAST(2, 0, 4)
-SDL_AudioDeviceID deviceId;
-bool HaveAudio()
-{
-	return deviceId != 0;
+	return SVidAudioStream && SVidAudioStream->isPlaying();
 }
 #endif
-
-void SVidRestartMixer()
-{
-	if (Mix_OpenAudio(22050, AUDIO_S16LSB, 2, 1024) < 0) {
-		Log("{}", Mix_GetError());
-	}
-	Mix_AllocateChannels(25);
-	Mix_ReserveChannels(1);
-}
-
-unsigned char *SVidApplyVolume(const unsigned char *raw, unsigned long rawLen)
-{
-	auto *scaled = (unsigned char *)malloc(rawLen);
-
-	if (SVidAudioDepth == 16) {
-		for (unsigned long i = 0; i < rawLen / 2; i++)
-			((Sint16 *)scaled)[i] = ((Sint16 *)raw)[i] * SVidVolume;
-	} else {
-		for (unsigned long i = 0; i < rawLen; i++)
-			scaled[i] = raw[i] * SVidVolume;
-	}
-
-	return (unsigned char *)scaled;
-}
 
 bool SVidLoadNextFrame()
 {
@@ -251,7 +139,6 @@ void SVidPlayBegin(const char *filename, int flags, HANDLE *video)
 	if ((flags & 0x40000) != 0)
 		SVidLoop = true;
 	bool enableVideo = (flags & 0x100000) == 0;
-	bool enableAudio = (flags & 0x1000000) == 0;
 	//0x8 // Non-interlaced
 	//0x200, 0x800 // Upscale video
 	//0x80000 // Center horizontally
@@ -261,46 +148,47 @@ void SVidPlayBegin(const char *filename, int flags, HANDLE *video)
 	SFileOpenFile(filename, video);
 
 	int bytestoread = SFileGetFileSize(*video, nullptr);
-	SVidBuffer = DiabloAllocPtr(bytestoread);
-	SFileReadFile(*video, SVidBuffer, bytestoread, nullptr, nullptr);
+	SVidBuffer = std::make_unique<uint8_t[]>(bytestoread);
+	SFileReadFile(*video, SVidBuffer.get(), bytestoread, nullptr, nullptr);
 
-	SVidSMK = smk_open_memory(SVidBuffer, bytestoread);
+	SVidSMK = smk_open_memory(SVidBuffer.get(), bytestoread);
 	if (SVidSMK == nullptr) {
 		return;
 	}
 
-	unsigned char channels[7], depth[7];
-	unsigned long rate[7];
+#ifndef NOSOUND
+	const bool enableAudio = (flags & 0x1000000) == 0;
+
+	constexpr std::size_t MaxSmkChannels = 7;
+	unsigned char channels[MaxSmkChannels];
+	unsigned char depth[MaxSmkChannels];
+	unsigned long rate[MaxSmkChannels]; // NOLINT(google-runtime-int): Match `smk_info_audio` signature.
 	smk_info_audio(SVidSMK, nullptr, channels, depth, rate);
+	LogVerbose(LogCategory::Audio, "SVid audio depth={} channels={} rate={}", depth[0], channels[0], rate[0]);
+
 	if (enableAudio && depth[0] != 0) {
+		sound_stop(); // Stop in-progress music and sound effects
+
 		smk_enable_audio(SVidSMK, 0, enableAudio);
-		SDL_AudioSpec audioFormat;
-		SDL_zero(audioFormat);
-		audioFormat.freq = rate[0];
-		audioFormat.format = depth[0] == 16 ? AUDIO_S16SYS : AUDIO_U8;
 		SVidAudioDepth = depth[0];
-		audioFormat.channels = channels[0];
-
-		SVidVolume = sgOptions.Audio.nSoundVolume - VOLUME_MIN;
-		SVidVolume /= -VOLUME_MIN;
-
-		Mix_CloseAudio();
-
-#if SDL_VERSION_ATLEAST(2, 0, 4)
-		deviceId = SDL_OpenAudioDevice(nullptr, 0, &audioFormat, nullptr, 0);
-		if (deviceId == 0) {
-			ErrSdl();
+		auto decoder = std::make_unique<PushAulibDecoder>(channels[0], rate[0]);
+		SVidAudioDecoder = decoder.get();
+		SVidAudioStream.emplace(/*rwops=*/nullptr, std::move(decoder),
+		    std::make_unique<Aulib::ResamplerSpeex>(sgOptions.Audio.nResamplingQuality), /*closeRw=*/false);
+		const float volume = static_cast<float>(sgOptions.Audio.nSoundVolume - VOLUME_MIN) / -VOLUME_MIN;
+		SVidAudioStream->setVolume(volume);
+		if (!SVidAudioStream->open()) {
+				LogError(LogCategory::Audio, "Aulib::Stream::open (from SVidPlayBegin): {}", SDL_GetError());
+				SVidAudioStream = std::nullopt;
+				SVidAudioDecoder = nullptr;
 		}
-
-		SDL_PauseAudioDevice(deviceId, 0); /* start audio playing. */
-#else
-		sVidAudioQueue->Subscribe(&audioFormat);
-		if (SDL_OpenAudio(&audioFormat, NULL) != 0) {
-			ErrSdl();
+		if (!SVidAudioStream->play()) {
+				LogError(LogCategory::Audio, "Aulib::Stream::play (from SVidPlayBegin): {}", SDL_GetError());
+				SVidAudioStream = std::nullopt;
+				SVidAudioDecoder = nullptr;
 		}
-		SDL_PauseAudio(0);
-#endif
 	}
+#endif
 
 	unsigned long nFrames;
 	smk_info_all(SVidSMK, nullptr, &nFrames, &SVidFrameLength);
@@ -380,19 +268,17 @@ bool SVidPlayContinue()
 		return SVidLoadNextFrame(); // Skip video and audio if the system is to slow
 	}
 
+#ifndef NOSOUND
 	if (HaveAudio()) {
-		unsigned long len = smk_get_audio_size(SVidSMK, 0);
-		unsigned char *audio = SVidApplyVolume(smk_get_audio(SVidSMK, 0), len);
-#if SDL_VERSION_ATLEAST(2, 0, 4)
-		if (SDL_QueueAudio(deviceId, audio, len) <= -1) {
-			Log("{}", SDL_GetError());
-			return false;
+		const auto len = smk_get_audio_size(SVidSMK, 0);
+		const unsigned char *buf = smk_get_audio(SVidSMK, 0);
+		if (SVidAudioDepth == 16) {
+			SVidAudioDecoder->PushSamples(reinterpret_cast<const std::int16_t *>(buf), len / 2);
+		} else {
+			SVidAudioDecoder->PushSamples(reinterpret_cast<const std::uint8_t *>(buf), len);
 		}
-#else
-		sVidAudioQueue->Enqueue(audio, len);
-#endif
-		free(audio);
 	}
+#endif
 
 	if (SDL_GetTicks() * 1000 >= SVidFrameEnd) {
 		return SVidLoadNextFrame(); // Skip video if the system is to slow
@@ -462,25 +348,17 @@ bool SVidPlayContinue()
 
 void SVidPlayEnd(HANDLE video)
 {
+#ifndef NOSOUND
 	if (HaveAudio()) {
-#if SDL_VERSION_ATLEAST(2, 0, 4)
-		SDL_ClearQueuedAudio(deviceId);
-		SDL_CloseAudioDevice(deviceId);
-		deviceId = 0;
-#else
-		SDL_CloseAudio();
-		sVidAudioQueue->Clear();
-#endif
-		SVidRestartMixer();
+		SVidAudioStream = std::nullopt;
+		SVidAudioDecoder = nullptr;
 	}
+#endif
 
 	if (SVidSMK != nullptr)
 		smk_close(SVidSMK);
 
-	if (SVidBuffer != nullptr) {
-		mem_free_dbg(SVidBuffer);
-		SVidBuffer = nullptr;
-	}
+	SVidBuffer = nullptr;
 
 	SDL_FreePalette(SVidPalette);
 	SVidPalette = nullptr;

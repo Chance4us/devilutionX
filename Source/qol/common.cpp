@@ -59,7 +59,7 @@ void FillRect(const CelOutputBuffer &out, int x, int y, int width, int height, U
 	}
 }
 
-void FastDrawVertLine(CelOutputBuffer out, int x, int y, int height, Uint8 col)
+void FastDrawVertLine(const CelOutputBuffer &out, int x, int y, int height, Uint8 col)
 {
 	BYTE *p = out.at(x, y);
 	for (int j = 0; j < height; j++) {

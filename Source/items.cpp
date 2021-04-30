@@ -16,6 +16,7 @@
 #include "options.h"
 #include "stores.h"
 #include "utils/language.h"
+#include "utils/math.h"
 
 namespace devilution {
 
@@ -281,8 +282,6 @@ _sfx_id ItemInvSnds[] = {
 	IS_ILARM,
 	IS_ILARM,
 };
-/** Specifies the current Y-coordinate used for validation of items on ground. */
-int idoppely = 16;
 /** Maps from Griswold premium item number to a quality level delta as added to the base quality level. */
 int premiumlvladd[] = {
 	// clang-format off
@@ -598,7 +597,7 @@ void CalcPlrItemVals(int p, bool Loadgfx)
 					tmpac *= itm->_iPLAC;
 					tmpac /= 100;
 					if (tmpac == 0)
-						tmpac = 1;
+						tmpac = math::Sign(itm->_iPLAC);
 					bac += tmpac;
 				}
 				iflgs |= itm->_iFlags;
@@ -1073,8 +1072,8 @@ void SetPlrHandItem(ItemStruct *h, int idata)
 
 	h->_itype = pAllItem->itype;
 	h->_iCurs = pAllItem->iCurs;
-	strcpy(h->_iName, pAllItem->iName);
-	strcpy(h->_iIName, pAllItem->iName);
+	strcpy(h->_iName, _(pAllItem->iName));
+	strcpy(h->_iIName, _(pAllItem->iName));
 	h->_iLoc = pAllItem->iLoc;
 	h->_iClass = pAllItem->iClass;
 	h->_iMinDam = pAllItem->iMinDam;
@@ -1483,8 +1482,8 @@ void GetBookSpell(int i, int lvl)
 		if (s == maxSpells)
 			s = 1;
 	}
-	strcat(items[i]._iName, spelldata[bs].sNameText);
-	strcat(items[i]._iIName, spelldata[bs].sNameText);
+	strcat(items[i]._iName, _(spelldata[bs].sNameText));
+	strcat(items[i]._iIName, _(spelldata[bs].sNameText));
 	items[i]._iSpell = bs;
 	items[i]._iMinMag = spelldata[bs].sMinInt;
 	items[i]._ivalue += spelldata[bs].sBookCost;
@@ -1526,7 +1525,7 @@ void GetStaffPower(int i, int lvl, int bs, bool onlygood)
 		}
 		if (nl != 0) {
 			preidx = l[GenerateRnd(nl)];
-			sprintf(istr, "%s %s", PL_Prefix[preidx].PLName, items[i]._iIName);
+			sprintf(istr, "%s %s", _(PL_Prefix[preidx].PLName), items[i]._iIName);
 			strcpy(items[i]._iIName, istr);
 			items[i]._iMagical = ITEM_QUALITY_MAGIC;
 			SaveItemPower(
@@ -1541,12 +1540,12 @@ void GetStaffPower(int i, int lvl, int bs, bool onlygood)
 		}
 	}
 	if (!control_WriteStringToBuffer((BYTE *)items[i]._iIName)) {
-		strcpy(items[i]._iIName, AllItemsList[items[i].IDidx].iSName);
+		strcpy(items[i]._iIName, _(AllItemsList[items[i].IDidx].iSName));
 		if (preidx != -1) {
-			sprintf(istr, "%s %s", PL_Prefix[preidx].PLName, items[i]._iIName);
+			sprintf(istr, "%s %s", _(PL_Prefix[preidx].PLName), items[i]._iIName);
 			strcpy(items[i]._iIName, istr);
 		}
-		sprintf(istr, _("%s of %s"), items[i]._iIName, spelldata[bs].sNameText);
+		sprintf(istr, _("%s of %s"), items[i]._iIName, _(spelldata[bs].sNameText));
 		strcpy(items[i]._iIName, istr);
 		if (items[i]._iMagical == ITEM_QUALITY_NORMAL)
 			strcpy(items[i]._iName, items[i]._iIName);
@@ -1587,9 +1586,9 @@ void GetStaffSpell(int i, int lvl, bool onlygood)
 			if (s == maxSpells)
 				s = SPL_FIREBOLT;
 		}
-		sprintf(istr, _("%s of %s"), items[i]._iName, spelldata[bs].sNameText);
+		sprintf(istr, _("%s of %s"), items[i]._iName, _(spelldata[bs].sNameText));
 		if (!control_WriteStringToBuffer((BYTE *)istr))
-			sprintf(istr, _("Staff of %s"), spelldata[bs].sNameText);
+			sprintf(istr, _("Staff of %s"), _(spelldata[bs].sNameText));
 		strcpy(items[i]._iName, istr);
 		strcpy(items[i]._iIName, istr);
 
@@ -1629,8 +1628,8 @@ void GetOilType(int i, int max_lvl)
 		r = GenerateRnd(2);
 		t = (r != 0 ? 6 : 5);
 	}
-	strcpy(items[i]._iName, OilNames[t]);
-	strcpy(items[i]._iIName, OilNames[t]);
+	strcpy(items[i]._iName, _(OilNames[t]));
+	strcpy(items[i]._iIName, _(OilNames[t]));
 	items[i]._iMiscId = OilMagic[t];
 	items[i]._ivalue = OilValues[t];
 	items[i]._iIvalue = OilValues[t];
@@ -1640,8 +1639,8 @@ void GetItemAttrs(int i, int idata, int lvl)
 {
 	items[i]._itype = AllItemsList[idata].itype;
 	items[i]._iCurs = AllItemsList[idata].iCurs;
-	strcpy(items[i]._iName, AllItemsList[idata].iName);
-	strcpy(items[i]._iIName, AllItemsList[idata].iName);
+	strcpy(items[i]._iName, _(AllItemsList[idata].iName));
+	strcpy(items[i]._iIName, _(AllItemsList[idata].iName));
 	items[i]._iLoc = AllItemsList[idata].iLoc;
 	items[i]._iClass = AllItemsList[idata].iClass;
 	items[i]._iMinDam = AllItemsList[idata].iMinDam;
@@ -2152,7 +2151,7 @@ void GetItemPower(int i, int minlvl, int maxlvl, affix_item_type flgs, bool only
 		}
 		if (nt != 0) {
 			preidx = l[GenerateRnd(nt)];
-			sprintf(istr, "%s %s", PL_Prefix[preidx].PLName, items[i]._iIName);
+			sprintf(istr, "%s %s", _(PL_Prefix[preidx].PLName), items[i]._iIName);
 			strcpy(items[i]._iIName, istr);
 			items[i]._iMagical = ITEM_QUALITY_MAGIC;
 			SaveItemPower(
@@ -2180,7 +2179,7 @@ void GetItemPower(int i, int minlvl, int maxlvl, affix_item_type flgs, bool only
 		}
 		if (nl != 0) {
 			sufidx = l[GenerateRnd(nl)];
-			sprintf(istr, _("%s of %s"), items[i]._iIName, PL_Suffix[sufidx].PLName);
+			sprintf(istr, _("%s of %s"), items[i]._iIName, _(PL_Suffix[sufidx].PLName));
 			strcpy(items[i]._iIName, istr);
 			items[i]._iMagical = ITEM_QUALITY_MAGIC;
 			SaveItemSuffix(i, sufidx);
@@ -2190,16 +2189,16 @@ void GetItemPower(int i, int minlvl, int maxlvl, affix_item_type flgs, bool only
 	if (!control_WriteStringToBuffer((BYTE *)items[i]._iIName)) {
 		int aii = items[i].IDidx;
 		if (AllItemsList[aii].iSName != nullptr)
-			strcpy(items[i]._iIName, AllItemsList[aii].iSName);
+			strcpy(items[i]._iIName, _(AllItemsList[aii].iSName));
 		else
 			items[i]._iName[0] = 0;
 
 		if (preidx != -1) {
-			sprintf(istr, "%s %s", PL_Prefix[preidx].PLName, items[i]._iIName);
+			sprintf(istr, "%s %s", _(PL_Prefix[preidx].PLName), items[i]._iIName);
 			strcpy(items[i]._iIName, istr);
 		}
 		if (sufidx != -1) {
-			sprintf(istr, _("%s of %s"), items[i]._iIName, PL_Suffix[sufidx].PLName);
+			sprintf(istr, _("%s of %s"), items[i]._iIName, _(PL_Suffix[sufidx].PLName));
 			strcpy(items[i]._iIName, istr);
 		}
 	}
@@ -2466,7 +2465,7 @@ void GetUniqueItem(int i, _unique_items uid)
 	if (UniqueItemList[uid].UINumPL > 5)
 		SaveItemPower(i, UniqueItemList[uid].UIPower6, UniqueItemList[uid].UIParam11, UniqueItemList[uid].UIParam12, 0, 0, 1);
 
-	strcpy(items[i]._iIName, UniqueItemList[uid].UIName);
+	strcpy(items[i]._iIName, _(UniqueItemList[uid].UIName));
 	items[i]._iIvalue = UniqueItemList[uid].UIValue;
 
 	if (items[i]._iMiscId == IMISC_UNIQUE)
@@ -2591,13 +2590,13 @@ void SpawnItem(int m, int x, int y, bool sendmsg)
 
 	int ii = AllocateItem();
 	GetSuperItemSpace(x, y, ii);
-	int upper = monster[m]._uniqtype ? 15 : 1;
+	int uper = monster[m]._uniqtype ? 15 : 1;
 
 	int mLevel = monster[m].MData->mLevel;
 	if (!gbIsHellfire && monster[m].MType->mtype == MT_DIABLO)
 		mLevel -= 15;
 
-	SetupAllItems(ii, idx, AdvanceRndSeed(), mLevel, upper, onlygood, false, false);
+	SetupAllItems(ii, idx, AdvanceRndSeed(), mLevel, uper, onlygood, false, false);
 
 	if (sendmsg)
 		NetSendCmdDItem(false, ii);
@@ -2701,7 +2700,7 @@ void CreateTypeItem(int x, int y, bool onlygood, int itype, int imisc, bool send
 	SetupBaseItem(x, y, idx, onlygood, sendmsg, delta);
 }
 
-void RecreateItem(int ii, int idx, WORD icreateinfo, int iseed, int ivalue, bool isHellfire)
+void RecreateItem(int ii, int idx, uint16_t icreateinfo, int iseed, int ivalue, bool isHellfire)
 {
 	bool _gbIsHellfire = gbIsHellfire;
 	gbIsHellfire = isHellfire;
@@ -2753,7 +2752,7 @@ void RecreateItem(int ii, int idx, WORD icreateinfo, int iseed, int ivalue, bool
 	gbIsHellfire = _gbIsHellfire;
 }
 
-void RecreateEar(int ii, WORD ic, int iseed, int Id, int dur, int mdur, int ch, int mch, int ivalue, int ibuff)
+void RecreateEar(int ii, uint16_t ic, int iseed, int Id, int dur, int mdur, int ch, int mch, int ivalue, int ibuff)
 {
 	SetPlrHandItem(&items[ii], IDI_EAR);
 	tempstr[0] = (ic >> 8) & 0x7F;
@@ -2814,25 +2813,25 @@ void hex2bin(const char *src, int bytes, char *target)
 	}
 }
 
-void items_427ABA(int x, int y)
+void items_427ABA(Point position)
 {
 	PkItemStruct PkSItem;
 
-	if (CornerStone.activated || x == 0 || y == 0) {
+	if (CornerStone.activated || position.x == 0 || position.y == 0) {
 		return;
 	}
 
 	CornerStone.item._itype = ITYPE_NONE;
 	CornerStone.activated = true;
-	if (dItem[x][y]) {
-		int ii = dItem[x][y] - 1;
+	if (dItem[position.x][position.y]) {
+		int ii = dItem[position.x][position.y] - 1;
 		for (int i = 0; i < numitems; i++) {
 			if (itemactive[i] == ii) {
 				DeleteItem(ii, i);
 				break;
 			}
 		}
-		dItem[x][y] = 0;
+		dItem[position.x][position.y] = 0;
 	}
 
 	if (strlen(sgOptions.Hellfire.szItem) < sizeof(PkItemStruct) * 2)
@@ -2842,10 +2841,10 @@ void items_427ABA(int x, int y)
 
 	int ii = AllocateItem();
 
-	dItem[x][y] = ii + 1;
+	dItem[position.x][position.y] = ii + 1;
 
 	UnPackItem(&PkSItem, &items[ii], (PkSItem.dwBuff & CF_HELLFIRE) != 0);
-	items[ii].position = { x, y };
+	items[ii].position = position;
 	RespawnItem(&items[ii], false);
 	CornerStone.item = items[ii];
 }
@@ -2997,21 +2996,22 @@ void DeleteItem(int ii, int i)
 
 void ItemDoppel()
 {
-	int idoppelx;
-	ItemStruct *i;
+	if (!gbIsMultiplayer)
+		return;
 
-	if (gbIsMultiplayer) {
-		for (idoppelx = 16; idoppelx < 96; idoppelx++) {
-			if (dItem[idoppelx][idoppely]) {
-				i = &items[dItem[idoppelx][idoppely] - 1];
-				if (i->position.x != idoppelx || i->position.y != idoppely)
-					dItem[idoppelx][idoppely] = 0;
-			}
+	static int idoppely = 16;
+
+	for (int idoppelx = 16; idoppelx < 96; idoppelx++) {
+		if (dItem[idoppelx][idoppely]) {
+			ItemStruct *i = &items[dItem[idoppelx][idoppely] - 1];
+			if (i->position.x != idoppelx || i->position.y != idoppely)
+				dItem[idoppelx][idoppely] = 0;
 		}
-		idoppely++;
-		if (idoppely == 96)
-			idoppely = 16;
 	}
+
+	idoppely++;
+	if (idoppely == 96)
+		idoppely = 16;
 }
 
 void ProcessItems()
@@ -3515,7 +3515,7 @@ void PrintItemPower(char plidx, ItemStruct *x)
 		strcpy(tempstr, _("Extra charges"));
 		break;
 	case IPL_SPELL:
-		sprintf(tempstr, _("%i %s charges"), x->_iMaxCharges, spelldata[x->_iSpell].sNameText);
+		sprintf(tempstr, _("%i %s charges"), x->_iMaxCharges, _(spelldata[x->_iSpell].sNameText));
 		break;
 	case IPL_FIREDAM:
 		if (x->_iFMinDam == x->_iFMaxDam)
@@ -3775,7 +3775,7 @@ void PrintUString(const CelOutputBuffer &out, int x, int y, bool cjustflag, cons
 	}
 }
 
-static void DrawULine(CelOutputBuffer out, int y)
+static void DrawULine(const CelOutputBuffer &out, int y)
 {
 	BYTE *src = out.at(26 + RIGHT_PANEL - SPANEL_WIDTH, 25);
 	BYTE *dst = out.at(26 + RIGHT_PANEL_X - SPANEL_WIDTH, y * 12 + 38);
@@ -3791,7 +3791,7 @@ void DrawUniqueInfo(const CelOutputBuffer &out)
 	if ((!chrflag && !questlog) || gnScreenWidth >= SPANEL_WIDTH * 3) {
 		uid = curruitem._iUid;
 		DrawUTextBack(GlobalBackBuffer());
-		PrintUString(out, 0 + RIGHT_PANEL - SPANEL_WIDTH, 2, true, UniqueItemList[uid].UIName, COL_GOLD);
+		PrintUString(out, 0 + RIGHT_PANEL - SPANEL_WIDTH, 2, true, _(UniqueItemList[uid].UIName), COL_GOLD);
 		DrawULine(out, 5);
 		PrintItemPower(UniqueItemList[uid].UIPower1, &curruitem);
 		y = 6 - UniqueItemList[uid].UINumPL + 8;
@@ -4085,7 +4085,7 @@ void UseItem(int p, item_misc_id Mid, spell_id spl)
 			plr[p].destParam1 = cursmx;
 			plr[p].destParam2 = cursmy;
 			if (p == myplr && spl == SPL_NOVA)
-				NetSendCmdLoc(myplr, true, CMD_NOVA, cursmx, cursmy);
+				NetSendCmdLoc(myplr, true, CMD_NOVA, { cursmx, cursmy });
 		}
 		break;
 	case IMISC_SCROLLT:
@@ -4998,7 +4998,7 @@ void RecreateHealerItem(int ii, int idx, int lvl, int iseed)
 	items[ii]._iIdentified = true;
 }
 
-void RecreateTownItem(int ii, int idx, WORD icreateinfo, int iseed)
+void RecreateTownItem(int ii, int idx, uint16_t icreateinfo, int iseed)
 {
 	if ((icreateinfo & CF_SMITH) != 0)
 		RecreateSmithItem(ii, icreateinfo & CF_LEVEL, iseed);
@@ -5140,7 +5140,7 @@ static void NextItemRecord(int i)
 	itemrecord[i].nIndex = itemrecord[gnNumGetRecords].nIndex;
 }
 
-bool GetItemRecord(int nSeed, WORD wCI, int nIndex)
+bool GetItemRecord(int nSeed, uint16_t wCI, int nIndex)
 {
 	int i;
 	DWORD dwTicks;
@@ -5159,7 +5159,7 @@ bool GetItemRecord(int nSeed, WORD wCI, int nIndex)
 	return true;
 }
 
-void SetItemRecord(int nSeed, WORD wCI, int nIndex)
+void SetItemRecord(int nSeed, uint16_t wCI, int nIndex)
 {
 	DWORD dwTicks;
 
@@ -5176,7 +5176,7 @@ void SetItemRecord(int nSeed, WORD wCI, int nIndex)
 	gnNumGetRecords++;
 }
 
-void PutItemRecord(int nSeed, WORD wCI, int nIndex)
+void PutItemRecord(int nSeed, uint16_t wCI, int nIndex)
 {
 	int i;
 	DWORD dwTicks;

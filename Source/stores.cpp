@@ -1147,7 +1147,7 @@ void S_StartTalk()
 
 	for (i = 0; i < MAXQUESTS; i++) {
 		if (quests[i]._qactive == QUEST_ACTIVE && Qtalklist[talker][i] != TEXT_NONE && quests[i]._qlog) {
-			AddSText(0, sn, true, questlist[i]._qlstr, COL_WHITE, true);
+			AddSText(0, sn, true, _(questlist[i]._qlstr), COL_WHITE, true);
 			sn += la;
 		}
 	}
@@ -2207,7 +2207,7 @@ void PrintSString(const CelOutputBuffer &out, int x, int y, bool cjustflag, cons
 	}
 }
 
-void DrawSLine(CelOutputBuffer out, int y)
+void DrawSLine(const CelOutputBuffer &out, int y)
 {
 	const int sy = y * 12;
 	BYTE *src, *dst;

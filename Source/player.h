@@ -16,6 +16,7 @@
 #include "path.h"
 #include "interfac.h"
 #include "utils/enum_traits.h"
+#include "engine/animationinfo.h"
 
 namespace devilution {
 
@@ -160,24 +161,11 @@ struct PlayerStruct {
 	ActorPosition position;
 	direction _pdir; // Direction faced by player (direction enum)
 	int _pgfxnum;    // Bitmask indicating what variant of the sprite the player is using. Lower byte define weapon (anim_weapon_id) and higher values define armour (starting with anim_armor_id)
-	uint8_t *_pAnimData;
-	int _pAnimDelay; // Tick length of each frame in the current animation
-	int _pAnimCnt;   // Increases by one each game tick, counting how close we are to _pAnimDelay
-	int _pAnimLen;   // Number of frames in current animation
-	int _pAnimFrame; // Current frame of animation.
+	/*
+	* @brief Contains Information for current Animation
+	*/
+	AnimationInfo AnimInfo;
 	int _pAnimWidth;
-	/*
-	* @brief Specifies how many animations-fractions are displayed between two gameticks. this can be > 0, if animations are skipped or < 0 if the same animation is shown in multiple times (delay specified).
-	*/
-	float _pAnimGameTickModifier;
-	/*
-	* @brief Number of GameTicks after the current animation sequence started
-	*/
-	int _pAnimGameTicksSinceSequenceStarted;
-	/*
-	* @brief Animation Frames that will be adjusted for the skipped Frames/GameTicks
-	*/
-	int _pAnimRelevantAnimationFramesForDistributing;
 	int _plid;
 	int _pvid;
 	spell_id _pSpell;
@@ -398,41 +386,18 @@ void InitPlrGFXMem(int pnum);
 void FreePlayerGFX(int pnum);
 
 /**
- * @brief Specifies what special logics are applied for a Animation
- */
-enum class AnimationDistributionParams : uint8_t {
-	None = 0,
-	/*
-	* @brief ProcessAnimation will be called after NewPlrAnim (in same GameTick as NewPlrAnim)
-	*/
-	ProcessAnimationPending,
-	/*
-	* @brief Delay of last Frame is ignored (for example, because only Frame and not delay is checked in game_logic)
-	*/
-	SkipsDelayOfLastFrame,
-};
-
-/**
  * @brief Sets the new Player Animation with all relevant information for rendering
-
  * @param pnum Player Id
- * @param Peq Pointer to Animation Data
- * @param numFrames Number of Frames in Animation
- * @param Delay Delay after each Animation sequence
+ * @param pData Pointer to Animation Data
+ * @param numberOfFrames Number of Frames in Animation
+ * @param delayLen Delay after each Animation sequence
  * @param width Width of sprite
  * @param params Specifies what special logics are applied to this Animation
  * @param numSkippedFrames Number of Frames that will be skipped (for example with modifier "faster attack")
  * @param distributeFramesBeforeFrame Distribute the numSkippedFrames only before this frame
  */
-void NewPlrAnim(int pnum, BYTE *Peq, int numFrames, int Delay, int width, AnimationDistributionParams params = AnimationDistributionParams::None, int numSkippedFrames = 0, int distributeFramesBeforeFrame = 0);
+void NewPlrAnim(int pnum, BYTE *pData, int numberOfFrames, int delayLen, int width, AnimationDistributionParams params = AnimationDistributionParams::None, int numSkippedFrames = 0, int distributeFramesBeforeFrame = 0);
 void SetPlrAnims(int pnum);
-void ProcessPlayerAnimation(int pnum);
-/**
- * @brief Calculates the Frame to use for the Animation rendering
- * @param pPlayer Player
- * @return The Frame to use for rendering
- */
-int GetFrameToUseForPlayerRendering(const PlayerStruct *pPlayer);
 void CreatePlayer(int pnum, HeroClass c);
 int CalcStatDiff(int pnum);
 #ifdef _DEBUG

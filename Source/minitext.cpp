@@ -6,6 +6,7 @@
 
 #include "control.h"
 #include "dx.h"
+#include "utils/language.h"
 
 namespace devilution {
 
@@ -129,10 +130,17 @@ int CalcTextSpeed(int nSFX)
 	int TextHeight;
 	Uint32 SfxFrames;
 
+	const int numLines = GetLinesInText(qtextptr);
+
+#ifndef NOSOUND
 	SfxFrames = GetSFXLength(nSFX);
 	assert(SfxFrames != 0);
+#else
+	// Sound is disabled -- estimate length from the number of lines.
+	SfxFrames = numLines * 3000;
+#endif
 
-	TextHeight = lineHeight * GetLinesInText(qtextptr);
+	TextHeight = lineHeight * numLines;
 	TextHeight += lineHeight * 5; // adjust so when speaker is done two line are left
 
 	return SfxFrames / TextHeight;
@@ -147,9 +155,8 @@ int CalcTextSpeed(int nSFX)
  */
 void PrintQTextChr(int sx, int sy, BYTE *pCelBuff, int nCel)
 {
-	CelOutputBuffer buf = GlobalBackBuffer();
 	const int start_y = 49 + UI_OFFSET_Y;
-	buf = buf.subregionY(start_y, 260);
+	const CelOutputBuffer &buf = GlobalBackBuffer().subregionY(start_y, 260);
 	CelDrawTo(buf, sx, sy - start_y, pCelBuff, nCel, 22);
 }
 
@@ -242,7 +249,7 @@ void InitQTextMsg(int m)
 {
 	if (alltext[m].scrlltxt) {
 		questlog = false;
-		qtextptr = alltext[m].txtstr;
+		qtextptr = _(alltext[m].txtstr);
 		qtextflag = true;
 		qtexty = 340 + UI_OFFSET_Y;
 		qtextSpd = CalcTextSpeed(alltext[m].sfxnr);

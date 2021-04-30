@@ -37,7 +37,7 @@ namespace devilution {
  * Specifies the current light entry.
  */
 int light_table_index;
-DWORD sgdwCursWdtOld;
+uint32_t sgdwCursWdtOld;
 int sgdwCursX;
 int sgdwCursY;
 /**
@@ -51,7 +51,7 @@ uint32_t sgdwCursHgt;
  * frameNum  := block & 0x0FFF
  * frameType := block & 0x7000 >> 12
  */
-DWORD level_cel_block;
+uint32_t level_cel_block;
 int sgdwCursXOld;
 int sgdwCursYOld;
 bool AutoMapShowItems;
@@ -141,7 +141,7 @@ static void BlitCursor(BYTE *dst, int dst_pitch, BYTE *src, int src_pitch)
 /**
  * @brief Remove the cursor from the buffer
  */
-static void scrollrt_draw_cursor_back_buffer(CelOutputBuffer out)
+static void scrollrt_draw_cursor_back_buffer(const CelOutputBuffer &out)
 {
 	if (sgdwCursWdt == 0) {
 		return;
@@ -159,7 +159,7 @@ static void scrollrt_draw_cursor_back_buffer(CelOutputBuffer out)
 /**
  * @brief Draw the cursor on the given buffer
  */
-static void scrollrt_draw_cursor_item(CelOutputBuffer out)
+static void scrollrt_draw_cursor_item(const CelOutputBuffer &out)
 {
 	int mx, my;
 	BYTE col;
@@ -215,7 +215,7 @@ static void scrollrt_draw_cursor_item(CelOutputBuffer out)
 	mx++;
 	my++;
 
-	out = out.subregion(0, 0, out.w() - 2, out.h());
+	const CelOutputBuffer &sub = out.subregion(0, 0, out.w() - 2, out.h());
 	if (pcurs >= CURSOR_FIRSTITEM) {
 		col = PAL16_YELLOW + 5;
 		if (plr[myplr].HoldItem._iMagical != 0) {
@@ -225,22 +225,22 @@ static void scrollrt_draw_cursor_item(CelOutputBuffer out)
 			col = PAL16_RED + 5;
 		}
 		if (pcurs <= 179) {
-			CelBlitOutlineTo(out, col, mx, my + cursH - 1, pCursCels, pcurs, cursW, false);
+			CelBlitOutlineTo(sub, col, mx, my + cursH - 1, pCursCels, pcurs, cursW, false);
 			if (col != PAL16_RED + 5) {
-				CelClippedDrawSafeTo(out, mx, my + cursH - 1, pCursCels, pcurs, cursW);
+				CelClippedDrawSafeTo(sub, mx, my + cursH - 1, pCursCels, pcurs, cursW);
 			} else {
-				CelDrawLightRedSafeTo(out, mx, my + cursH - 1, pCursCels, pcurs, cursW, 1);
+				CelDrawLightRedSafeTo(sub, mx, my + cursH - 1, pCursCels, pcurs, cursW, 1);
 			}
 		} else {
-			CelBlitOutlineTo(out, col, mx, my + cursH - 1, pCursCels2, pcurs - 179, cursW, false);
+			CelBlitOutlineTo(sub, col, mx, my + cursH - 1, pCursCels2, pcurs - 179, cursW, false);
 			if (col != PAL16_RED + 5) {
-				CelClippedDrawSafeTo(out, mx, my + cursH - 1, pCursCels2, pcurs - 179, cursW);
+				CelClippedDrawSafeTo(sub, mx, my + cursH - 1, pCursCels2, pcurs - 179, cursW);
 			} else {
-				CelDrawLightRedSafeTo(out, mx, my + cursH - 1, pCursCels2, pcurs - 179, cursW, 0);
+				CelDrawLightRedSafeTo(sub, mx, my + cursH - 1, pCursCels2, pcurs - 179, cursW, 0);
 			}
 		}
 	} else {
-		CelClippedDrawSafeTo(out, mx, my + cursH - 1, pCursCels, pcurs, cursW);
+		CelClippedDrawSafeTo(sub, mx, my + cursH - 1, pCursCels, pcurs, cursW);
 	}
 }
 
@@ -417,8 +417,8 @@ static void DrawPlayer(const CelOutputBuffer &out, int pnum, int x, int y, int p
 
 	PlayerStruct *pPlayer = &plr[pnum];
 
-	BYTE *pCelBuff = pPlayer->_pAnimData;
-	int nCel = GetFrameToUseForPlayerRendering(pPlayer);
+	BYTE *pCelBuff = pPlayer->AnimInfo.pData;
+	int nCel = pPlayer->AnimInfo.GetFrameToUseForRendering();
 	int nWidth = pPlayer->_pAnimWidth;
 
 	if (pCelBuff == nullptr) {
@@ -949,7 +949,7 @@ static void scrollrt_draw(const CelOutputBuffer &out, int x, int y, int sx, int 
 /**
  * @brief Scale up the top left part of the buffer 2x.
  */
-static void Zoom(CelOutputBuffer out)
+static void Zoom(const CelOutputBuffer &out)
 {
 	int viewport_width = out.w();
 	int viewport_offset_x = 0;
@@ -1150,7 +1150,7 @@ static void DrawGame(const CelOutputBuffer &full_out, int x, int y)
 	int sx, sy, columns, rows;
 
 	// Limit rendering to the view area
-	CelOutputBuffer out = zoomflag
+	const CelOutputBuffer &out = zoomflag
 	    ? full_out.subregionY(0, gnViewportHeight)
 	    : full_out.subregionY(0, (gnViewportHeight + 1) / 2);
 
@@ -1575,7 +1575,7 @@ void DrawAndBlit()
 	force_redraw = 0;
 
 	lock_buf(0);
-	CelOutputBuffer out = GlobalBackBuffer();
+	const CelOutputBuffer &out = GlobalBackBuffer();
 
 	nthread_UpdateProgressToNextGameTick();
 

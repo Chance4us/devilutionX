@@ -18,7 +18,8 @@
 #include "dvlnet/zerotier_native.h"
 #include "utils/log.hpp"
 
-namespace devilution::net {
+namespace devilution {
+namespace net {
 
 protocol_zt::protocol_zt()
 {
@@ -163,7 +164,7 @@ bool protocol_zt::send_queued_all()
 {
 	for (auto &peer : peer_list) {
 		if (!send_queued_peer(peer.first)) {
-			// disconnect this peer
+			// handle error?
 		}
 	}
 	return true;
@@ -174,7 +175,7 @@ bool protocol_zt::recv_from_peers()
 	for (auto &peer : peer_list) {
 		if (peer.second.fd != -1) {
 			if (!recv_peer(peer.first)) {
-				// error, disconnect?
+				disconnect_queue.push_back(peer.first);
 			}
 		}
 	}
@@ -243,6 +244,16 @@ bool protocol_zt::recv(endpoint &peer, buffer_t &data)
 	return false;
 }
 
+bool protocol_zt::get_disconnected(endpoint &peer)
+{
+	if (!disconnect_queue.empty()) {
+		peer = disconnect_queue.front();
+		disconnect_queue.pop_front();
+		return true;
+	}
+	return false;
+}
+
 void protocol_zt::disconnect(const endpoint &peer)
 {
 	if (peer_list.count(peer)) {
@@ -305,4 +316,5 @@ std::string protocol_zt::make_default_gamename()
 	return ret;
 }
 
-} // namespace devilution::net
+} // namespace net
+} // namespace devilution

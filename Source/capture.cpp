@@ -113,19 +113,18 @@ static BYTE *CaptureEnc(BYTE *src, BYTE *dst, int width)
  * @param buf Buffer
  * @return True if successful, else false
  */
-static bool CapturePix(CelOutputBuffer buf, std::ofstream *out)
+static bool CapturePix(const CelOutputBuffer &buf, std::ofstream *out)
 {
 	int width = buf.w();
-	BYTE *pBuffer = (BYTE *)DiabloAllocPtr(2 * width);
+	auto pBuffer = std::make_unique<BYTE[]>(2 * width);
 	BYTE *pixels = buf.begin();
 	for (int height = buf.h(); height > 0; height--) {
-		const BYTE *pBufferEnd = CaptureEnc(pixels, pBuffer, width);
+		const BYTE *pBufferEnd = CaptureEnc(pixels, pBuffer.get(), width);
 		pixels += buf.pitch();
-		out->write(reinterpret_cast<const char *>(pBuffer), pBufferEnd - pBuffer);
+		out->write(reinterpret_cast<const char *>(pBuffer.get()), pBufferEnd - pBuffer.get());
 		if (out->fail())
 			return false;
 	}
-	mem_free_dbg(pBuffer);
 	return true;
 }
 
@@ -183,7 +182,7 @@ void CaptureScreen()
 	RedPalette();
 
 	lock_buf(2);
-	CelOutputBuffer buf = GlobalBackBuffer();
+	const CelOutputBuffer &buf = GlobalBackBuffer();
 	success = CaptureHdr(buf.w(), buf.h(), outStream);
 	if (success) {
 		success = CapturePix(buf, outStream);
