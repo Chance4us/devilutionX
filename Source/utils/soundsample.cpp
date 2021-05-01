@@ -14,17 +14,26 @@
 
 #include "options.h"
 #include "storm/storm_sdl_rw.h"
-#include "utils/stubs.h"
+#include "storm/storm.h"
 #include "utils/log.hpp"
+#include "utils/stubs.h"
 
 namespace devilution {
 
-///// SoundSample /////
+SoundSample::~SoundSample()
+{
+	if (file_handle_ != nullptr)
+		SFileCloseFile(file_handle_);
+}
 
 void SoundSample::Release()
 {
-	stream_ = std::nullopt;
+	stream_ = nullptr;
 	file_data_ = nullptr;
+	file_data_size_ = 0;
+	if (file_handle_ != nullptr)
+		SFileCloseFile(file_handle_);
+	file_handle_ = nullptr;
 };
 
 /**
@@ -67,30 +76,39 @@ void SoundSample::Stop()
 		stream_->stop();
 };
 
-int SoundSample::SetChunkStream(HANDLE stormHandle)
+int SoundSample::SetChunkStream(std::string filePath)
 {
-	stream_.emplace(SFileRw_FromStormHandle(stormHandle), std::make_unique<Aulib::DecoderDrwav>(),
+	file_path_ = std::move(filePath);
+	if (!SFileOpenFile(file_path_.c_str(), &file_handle_)) {
+		LogError(LogCategory::Audio, "SFileOpenFile failed (from SoundSample::SetChunkStream): {}", SErrGetLastError());
+		return -1;
+	}
+
+	stream_ = std::make_unique<Aulib::Stream>(SFileRw_FromStormHandle(file_handle_), std::make_unique<Aulib::DecoderDrwav>(),
 	    std::make_unique<Aulib::ResamplerSpeex>(sgOptions.Audio.nResamplingQuality), /*closeRw=*/true);
 	if (!stream_->open()) {
-		stream_ = std::nullopt;
+		stream_ = nullptr;
+		SFileCloseFile(file_handle_);
+		file_handle_ = nullptr;
 		LogError(LogCategory::Audio, "Aulib::Stream::open (from SoundSample::SetChunkStream): {}", SDL_GetError());
 		return -1;
 	}
 	return 0;
 }
 
-int SoundSample::SetChunk(std::unique_ptr<std::uint8_t[]> fileData, size_t dwBytes)
+int SoundSample::SetChunk(std::shared_ptr<std::uint8_t[]> fileData, std::size_t dwBytes)
 {
-	file_data_ = std::move(fileData);
+	file_data_ = fileData;
+	file_data_size_ = dwBytes;
 	SDL_RWops *buf = SDL_RWFromConstMem(file_data_.get(), dwBytes);
 	if (buf == nullptr) {
 		return -1;
 	}
 
-	stream_.emplace(buf, std::make_unique<Aulib::DecoderDrwav>(),
+	stream_ = std::make_unique<Aulib::Stream>(buf, std::make_unique<Aulib::DecoderDrwav>(),
 	    std::make_unique<Aulib::ResamplerSpeex>(sgOptions.Audio.nResamplingQuality), /*closeRw=*/true);
 	if (!stream_->open()) {
-		stream_ = std::nullopt;
+		stream_ = nullptr;
 		file_data_ = nullptr;
 		LogError(LogCategory::Audio, "Aulib::Stream::open (from SoundSample::SetChunk): {}", SDL_GetError());
 		return -1;
@@ -102,7 +120,7 @@ int SoundSample::SetChunk(std::unique_ptr<std::uint8_t[]> fileData, size_t dwByt
 /**
  * @return Audio duration in ms
  */
-int SoundSample::GetLength()
+int SoundSample::GetLength() const
 {
 	if (!stream_)
 		return 0;
