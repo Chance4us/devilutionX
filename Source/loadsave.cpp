@@ -138,9 +138,9 @@ class SaveHelper {
 
 public:
 	SaveHelper(const char *szFileName, size_t bufferLen)
-		: m_szFileName(szFileName)
-		, m_buffer(std::make_unique<uint8_t[]>(codec_get_encoded_len(bufferLen)))
-		, m_capacity(bufferLen)
+	    : m_szFileName(szFileName)
+	    , m_buffer(new uint8_t[codec_get_encoded_len(bufferLen)])
+	    , m_capacity(bufferLen)
 	{
 	}
 
@@ -218,9 +218,7 @@ static void LoadItemData(LoadHelper *file, ItemStruct *pItem)
 	file->skip(4); // Skip pointer _iAnimData
 	pItem->_iAnimLen = file->nextLE<int32_t>();
 	pItem->_iAnimFrame = file->nextLE<int32_t>();
-	pItem->_iAnimWidth = file->nextLE<int32_t>();
-	// Skip _iAnimWidth2
-	file->skip(4);
+	file->skip(8); // Skip _iAnimWidth and _iAnimWidth2
 	file->skip(4); // Unused since 1.02
 	pItem->_iSelFlag = file->nextLE<uint8_t>();
 	file->skip(3); // Alignment
@@ -994,10 +992,10 @@ void LoadGame(bool firstflag)
 
 	LoadHelper file("game");
 	if (!file.isValid())
-		app_fatal(_("Unable to open save file archive"));
+		app_fatal("%s", _("Unable to open save file archive"));
 
 	if (!IsHeaderValid(file.nextLE<uint32_t>()))
-		app_fatal(_("Invalid save file"));
+		app_fatal("%s", _("Invalid save file"));
 
 	if (gbIsHellfireSaveGame) {
 		giNumberOfLevels = 25;
@@ -1026,7 +1024,7 @@ void LoadGame(bool firstflag)
 	int _nobjects = file.nextBE<int32_t>();
 
 	if (!gbIsHellfire && currlevel > 17)
-		app_fatal(_("Player is on a Hellfire only level"));
+		app_fatal("%s", _("Player is on a Hellfire only level"));
 
 	for (uint8_t i = 0; i < giNumberOfLevels; i++) {
 		glSeedTbl[i] = file.nextBE<uint32_t>();
@@ -1206,9 +1204,10 @@ static void SaveItem(SaveHelper *file, ItemStruct *pItem)
 	file->skip(4); // Skip pointer _iAnimData
 	file->writeLE<int32_t>(pItem->_iAnimLen);
 	file->writeLE<int32_t>(pItem->_iAnimFrame);
-	file->writeLE<int32_t>(pItem->_iAnimWidth);
+	// write _iAnimWidth for vanilla compatibility
+	file->writeLE<int32_t>(ItemAnimWidth);
 	// write _iAnimWidth2 for vanilla compatibility
-	file->writeLE<int32_t>(CalculateWidth2(pItem->_iAnimWidth));
+	file->writeLE<int32_t>(CalculateWidth2(ItemAnimWidth));
 	file->skip(4); // Unused since 1.02
 	file->writeLE<uint8_t>(pItem->_iSelFlag);
 	file->skip(3); // Alignment
@@ -1783,7 +1782,7 @@ void SaveGameData()
 	else if (!gbIsSpawn && !gbIsHellfire)
 		file.writeLE<uint32_t>(LoadLE32("RETL"));
 	else
-		app_fatal(_("Invalid game state"));
+		app_fatal("%s", _("Invalid game state"));
 
 	if (gbIsHellfire) {
 		giNumberOfLevels = 25;
@@ -2021,7 +2020,7 @@ void LoadLevel()
 	GetPermLevelNames(szName);
 	LoadHelper file(szName);
 	if (!file.isValid())
-		app_fatal(_("Unable to open save file archive"));
+		app_fatal("%s", _("Unable to open save file archive"));
 
 	if (leveltype != DTYPE_TOWN) {
 		for (int j = 0; j < MAXDUNY; j++) {

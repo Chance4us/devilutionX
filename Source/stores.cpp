@@ -72,7 +72,7 @@ const char *const talkname[] = {
 
 void DrawSTextBack(const CelOutputBuffer &out)
 {
-	CelDrawTo(out, PANEL_X + 344, 327 + UI_OFFSET_Y, pSTextBoxCels, 1, 271);
+	CelDrawTo(out, PANEL_X + 344, 327 + UI_OFFSET_Y, *pSTextBoxCels, 1);
 	DrawHalfTransparentRectTo(out, PANEL_X + 347, UI_OFFSET_Y + 28, 265, 297);
 }
 
@@ -83,16 +83,16 @@ void DrawSSlider(const CelOutputBuffer &out, int y1, int y2)
 	yd1 = y1 * 12 + 44 + UI_OFFSET_Y;
 	yd2 = y2 * 12 + 44 + UI_OFFSET_Y;
 	if (stextscrlubtn != -1)
-		CelDrawTo(out, PANEL_X + 601, yd1, pSTextSlidCels, 12, 12);
+		CelDrawTo(out, PANEL_X + 601, yd1, *pSTextSlidCels, 12);
 	else
-		CelDrawTo(out, PANEL_X + 601, yd1, pSTextSlidCels, 10, 12);
+		CelDrawTo(out, PANEL_X + 601, yd1, *pSTextSlidCels, 10);
 	if (stextscrldbtn != -1)
-		CelDrawTo(out, PANEL_X + 601, yd2, pSTextSlidCels, 11, 12);
+		CelDrawTo(out, PANEL_X + 601, yd2, *pSTextSlidCels, 11);
 	else
-		CelDrawTo(out, PANEL_X + 601, yd2, pSTextSlidCels, 9, 12);
+		CelDrawTo(out, PANEL_X + 601, yd2, *pSTextSlidCels, 9);
 	yd1 += 12;
 	for (yd3 = yd1; yd3 < yd2; yd3 += 12) {
-		CelDrawTo(out, PANEL_X + 601, yd3, pSTextSlidCels, 14, 12);
+		CelDrawTo(out, PANEL_X + 601, yd3, *pSTextSlidCels, 14);
 	}
 	if (stextsel == 22)
 		yd3 = stextlhold;
@@ -102,7 +102,7 @@ void DrawSSlider(const CelOutputBuffer &out, int y1, int y2)
 		yd3 = 1000 * (stextsval + ((yd3 - stextup) / 4)) / (storenumh - 1) * (y2 * 12 - y1 * 12 - 24) / 1000;
 	else
 		yd3 = 0;
-	CelDrawTo(out, PANEL_X + 601, (y1 + 1) * 12 + 44 + UI_OFFSET_Y + yd3, pSTextSlidCels, 13, 12);
+	CelDrawTo(out, PANEL_X + 601, (y1 + 1) * 12 + 44 + UI_OFFSET_Y + yd3, *pSTextSlidCels, 13);
 }
 
 void AddSLine(int y)
@@ -2048,9 +2048,9 @@ void S_DrunkEnter()
 
 ItemStruct golditem;
 
-BYTE *pSTextBoxCels;
-BYTE *pSPentSpn2Cels;
-BYTE *pSTextSlidCels;
+std::optional<CelSprite> pSTextBoxCels;
+std::optional<CelSprite> pSPentSpn2Cels;
+std::optional<CelSprite> pSTextSlidCels;
 
 talk_id stextflag;
 
@@ -2095,9 +2095,9 @@ void AddStoreHoldRepair(ItemStruct *itm, int i)
 
 void InitStores()
 {
-	pSTextBoxCels = LoadFileInMem("Data\\TextBox2.CEL", nullptr);
-	pSPentSpn2Cels = LoadFileInMem("Data\\PentSpn2.CEL", nullptr);
-	pSTextSlidCels = LoadFileInMem("Data\\TextSlid.CEL", nullptr);
+	pSTextBoxCels = LoadCel("Data\\TextBox2.CEL", 271);
+	pSPentSpn2Cels = LoadCel("Data\\PentSpn2.CEL", 12);
+	pSTextSlidCels = LoadCel("Data\\TextSlid.CEL", 12);
 	ClearSText(0, STORE_LINES);
 	stextflag = STORE_NONE;
 	stextsize = false;
@@ -2146,9 +2146,9 @@ void SetupTownStores()
 
 void FreeStoreMem()
 {
-	MemFreeDbg(pSTextBoxCels);
-	MemFreeDbg(pSPentSpn2Cels);
-	MemFreeDbg(pSTextSlidCels);
+	pSTextBoxCels = std::nullopt;
+	pSPentSpn2Cels = std::nullopt;
+	pSTextSlidCels = std::nullopt;
 }
 
 void PrintSString(const CelOutputBuffer &out, int x, int y, bool cjustflag, const char *str, text_color col, int val)
@@ -2180,7 +2180,7 @@ void PrintSString(const CelOutputBuffer &out, int x, int y, bool cjustflag, cons
 		sx += k;
 	}
 	if (stextsel == y) {
-		CelDrawTo(out, cjustflag ? xx + x + k - 20 : xx + x - 20, s + 45 + UI_OFFSET_Y, pSPentSpn2Cels, PentSpn2Spin(), 12);
+		CelDrawTo(out, cjustflag ? xx + x + k - 20 : xx + x - 20, s + 45 + UI_OFFSET_Y, *pSPentSpn2Cels, PentSpn2Spin());
 	}
 	for (i = 0; i < len; i++) {
 		c = fontframe[gbFontTransTbl[(BYTE)str[i]]];
@@ -2203,7 +2203,7 @@ void PrintSString(const CelOutputBuffer &out, int x, int y, bool cjustflag, cons
 		}
 	}
 	if (stextsel == y) {
-		CelDrawTo(out, cjustflag ? (xx + x + k + 4) : (PANEL_X + 596 - x), s + 45 + UI_OFFSET_Y, pSPentSpn2Cels, PentSpn2Spin(), 12);
+		CelDrawTo(out, cjustflag ? (xx + x + k + 4) : (PANEL_X + 596 - x), s + 45 + UI_OFFSET_Y, *pSPentSpn2Cels, PentSpn2Spin());
 	}
 }
 

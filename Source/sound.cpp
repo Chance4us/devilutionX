@@ -3,6 +3,8 @@
  *
  * Implementation of functions setting up the audio pipeline.
  */
+#include "sound.h"
+
 #include <cstdint>
 #include <memory>
 
@@ -18,13 +20,12 @@
 #include "storm/storm.h"
 #include "utils/log.hpp"
 #include "utils/stdcompat/optional.hpp"
+#include "utils/stdcompat/shared_ptr_array.hpp"
 #include "utils/stubs.h"
 
 namespace devilution {
 
 bool gbSndInited;
-/** Handle to the music Storm file. */
-HANDLE sghMusic;
 /** The active background music track id. */
 _music_id sgnMusicTrack = NUM_MUSIC;
 
@@ -36,16 +37,15 @@ std::optional<Aulib::Stream> music;
 char *musicBuffer;
 #endif
 
-void LoadMusic()
+void LoadMusic(HANDLE handle)
 {
 #ifndef DISABLE_STREAMING_MUSIC
-	SDL_RWops *musicRw = SFileRw_FromStormHandle(sghMusic);
+	SDL_RWops *musicRw = SFileRw_FromStormHandle(handle);
 #else
-	int bytestoread = SFileGetFileSize(sghMusic, 0);
-	musicBuffer = (char *)DiabloAllocPtr(bytestoread);
-	SFileReadFile(sghMusic, musicBuffer, bytestoread, NULL, 0);
-	SFileCloseFile(sghMusic);
-	sghMusic = NULL;
+	int bytestoread = SFileGetFileSize(handle, 0);
+	musicBuffer = new char[bytestoread];
+	SFileReadFile(handle, musicBuffer, bytestoread, NULL, 0);
+	SFileCloseFile(handle);
 
 	SDL_RWops *musicRw = SDL_RWFromConstMem(musicBuffer, bytestoread);
 #endif
@@ -57,15 +57,22 @@ void CleanupMusic()
 {
 		music = std::nullopt;
 		sgnMusicTrack = NUM_MUSIC;
-#ifndef DISABLE_STREAMING_MUSIC
-		SFileCloseFile(sghMusic);
-		sghMusic = nullptr;
-#else
+#ifdef DISABLE_STREAMING_MUSIC
 	if (musicBuffer != nullptr) {
-		mem_free_dbg(musicBuffer);
+		delete[] musicBuffer;
 		musicBuffer = nullptr;
 	}
 #endif
+}
+
+std::vector<std::unique_ptr<SoundSample>> duplicateSounds;
+SoundSample *DuplicateSound(const SoundSample &sound) {
+	auto duplicate = std::make_unique<SoundSample>();
+	if (duplicate->DuplicateFrom(sound) != 0)
+		return nullptr;
+	auto *result = duplicate.get();
+	duplicateSounds.push_back(std::move(duplicate));
+	return result;
 }
 
 } // namespace
@@ -109,6 +116,19 @@ static int CapVolume(int volume)
 	return volume - volume % 100;
 }
 
+void ClearDuplicateSounds() {
+	duplicateSounds.clear();
+}
+
+void CleanupFinishedDuplicateSounds()
+{
+	duplicateSounds.erase(
+	    std::remove_if(duplicateSounds.begin(), duplicateSounds.end(), [](const auto &sound) {
+		    return !sound->IsPlaying();
+	    }),
+	    duplicateSounds.end());
+}
+
 void snd_play_snd(TSnd *pSnd, int lVolume, int lPan)
 {
 	DWORD tc;
@@ -122,35 +142,39 @@ void snd_play_snd(TSnd *pSnd, int lVolume, int lPan)
 		return;
 	}
 
+	SoundSample *sound = &pSnd->DSB;
+	if (pSnd->DSB.IsPlaying()) {
+		sound = DuplicateSound(pSnd->DSB);
+		if (sound == nullptr)
+			return;
+	}
+
 	lVolume = CapVolume(lVolume + sgOptions.Audio.nSoundVolume);
-	pSnd->DSB.Play(lVolume, lPan);
+	sound->Play(lVolume, lPan);
 	pSnd->start_tc = tc;
 }
 
 std::unique_ptr<TSnd> sound_file_load(const char *path, bool stream)
 {
-	HANDLE file;
 	int error = 0;
 
-	if (!SFileOpenFile(path, &file)) {
-		ErrDlg("SFileOpenFile failed", path, __FILE__, __LINE__);
-	}
 	auto snd = std::make_unique<TSnd>();
-	snd->sound_path = std::string(path);
 	snd->start_tc = SDL_GetTicks() - 80 - 1;
 
 	if (stream) {
-		snd->file_handle = file;
-		error = snd->DSB.SetChunkStream(file);
+		error = snd->DSB.SetChunkStream(path);
 		if (error != 0) {
-			SFileCloseFile(file);
 			ErrSdl();
 		}
 	} else {
+		HANDLE file;
+		if (!SFileOpenFile(path, &file)) {
+			ErrDlg("SFileOpenFile failed", path, __FILE__, __LINE__);
+		}
 		DWORD dwBytes = SFileGetFileSize(file, nullptr);
-		auto wave_file = std::make_unique<std::uint8_t[]>(dwBytes);
+		auto wave_file = MakeArraySharedPtr<std::uint8_t>(dwBytes);
 		SFileReadFile(file, wave_file.get(), dwBytes, nullptr, nullptr);
-		error = snd->DSB.SetChunk(std::move(wave_file), dwBytes);
+		error = snd->DSB.SetChunk(wave_file, dwBytes);
 		SFileCloseFile(file);
 	}
 	if (error != 0) {
@@ -165,8 +189,6 @@ TSnd::~TSnd()
 {
 	DSB.Stop();
 	DSB.Release();
-	if (file_handle != nullptr)
-		SFileCloseFile(file_handle);
 }
 #endif
 
@@ -218,11 +240,12 @@ void music_start(uint8_t nTrack)
 			trackPath = sgszSpawnMusicTracks[nTrack];
 		else
 			trackPath = sgszMusicTracks[nTrack];
-		success = SFileOpenFile(trackPath, &sghMusic);
+		HANDLE handle;
+		success = SFileOpenFile(trackPath, &handle);
 		if (!success) {
-			sghMusic = nullptr;
+			handle = nullptr;
 		} else {
-			LoadMusic();
+			LoadMusic(handle);
 			if (!music->open()) {
 				LogError(LogCategory::Audio, "Aulib::Stream::open (from music_start): {}", SDL_GetError());
 				CleanupMusic();

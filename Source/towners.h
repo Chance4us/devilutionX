@@ -6,6 +6,8 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
+#include "utils/stdcompat/string_view.hpp"
 
 #include "items.h"
 #include "player.h"
@@ -40,7 +42,7 @@ struct TNQ {
 
 struct TownerStruct {
 	uint8_t *_tNAnim[8];
-	uint8_t *_tNData;
+	std::unique_ptr<BYTE[]> _tNData;
 	uint8_t *_tAnimData;
 	int16_t _tSeed;
 	/** Tile position of NPC */
@@ -52,7 +54,7 @@ struct TownerStruct {
 	uint8_t _tAnimFrame; // Current frame of animation.
 	uint8_t _tAnimFrameCnt;
 	uint8_t _tNFrames;
-	char _tName[PLR_NAME_LEN];
+	string_view _tName;
 	TNQ qsts[MAXQUESTS];
 	bool _tSelFlag;
 	bool _tMsgSaid;

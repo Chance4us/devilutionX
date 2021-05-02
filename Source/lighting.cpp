@@ -22,7 +22,7 @@ char lightmax;
 bool dolighting;
 BYTE lightblock[64][16][16];
 int visionid;
-BYTE *pLightTbl;
+std::array<BYTE, LIGHTSIZE> pLightTbl;
 bool lightflag;
 
 /**
@@ -764,26 +764,15 @@ void DoVision(int nXPos, int nYPos, int nRadius, bool doautomap, bool visible)
 	}
 }
 
-void FreeLightTable()
-{
-	MemFreeDbg(pLightTbl);
-}
-
-void InitLightTable()
-{
-	assert(!pLightTbl);
-	pLightTbl = DiabloAllocPtr(LIGHTSIZE);
-}
-
 void MakeLightTable()
 {
 	int i, j, k, l, lights, shade, l1, l2, cnt, rem, div;
 	double fs, fa;
 	BYTE col, max;
-	BYTE *tbl, *trn;
+	BYTE *tbl;
 	BYTE blood[16];
 
-	tbl = pLightTbl;
+	tbl = pLightTbl.data();
 	shade = 0;
 
 	if (light4flag) {
@@ -851,7 +840,7 @@ void MakeLightTable()
 	}
 
 	if (leveltype == DTYPE_HELL) {
-		tbl = pLightTbl;
+		tbl = pLightTbl.data();
 		for (i = 0; i < lights; i++) {
 			l1 = lights - i;
 			l2 = l1;
@@ -891,7 +880,7 @@ void MakeLightTable()
 		tbl += 224;
 	}
 	if (currlevel >= 17) {
-		tbl = pLightTbl;
+		tbl = pLightTbl.data();
 		for (i = 0; i < lights; i++) {
 			*tbl++ = 0;
 			for (j = 1; j < 16; j++)
@@ -904,17 +893,19 @@ void MakeLightTable()
 		tbl += 240;
 	}
 
-	trn = LoadFileInMem("PlrGFX\\Infra.TRN", nullptr);
-	for (i = 0; i < 256; i++) {
-		*tbl++ = trn[i];
+	{
+		auto trn = LoadFileInMem("PlrGFX\\Infra.TRN");
+		for (i = 0; i < 256; i++) {
+			*tbl++ = trn[i];
+		}
 	}
-	mem_free_dbg(trn);
 
-	trn = LoadFileInMem("PlrGFX\\Stone.TRN", nullptr);
-	for (i = 0; i < 256; i++) {
-		*tbl++ = trn[i];
+	{
+		auto trn = LoadFileInMem("PlrGFX\\Stone.TRN");
+		for (i = 0; i < 256; i++) {
+			*tbl++ = trn[i];
+		}
 	}
-	mem_free_dbg(trn);
 
 	for (i = 0; i < 8; i++) {
 		for (col = 226; col < 239; col++) {
@@ -1275,7 +1266,7 @@ void lighting_color_cycling()
 		return;
 	}
 
-	tbl = pLightTbl;
+	tbl = pLightTbl.data();
 
 	for (j = 0; j < l; j++) {
 		tbl++;

@@ -121,3 +121,4 @@ void DrawMonsterHealthBar(const CelOutputBuffer &out)
 }
 
 } // namespace devilution
+

@@ -55,3 +55,4 @@ void FreeQol();
 void InitQol();
 
 } // namespace devilution
+

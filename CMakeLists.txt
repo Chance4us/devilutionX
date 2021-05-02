@@ -389,6 +389,7 @@ set(devilutionx_SRCS
   Source/dvlnet/loopback.cpp
   Source/dvlnet/packet.cpp
   Source/storm/storm.cpp
+  Source/storm/storm_file_wrapper.cpp
   Source/storm/storm_net.cpp
   Source/storm/storm_sdl_rw.cpp
   Source/storm/storm_svid.cpp
@@ -515,7 +516,7 @@ endif()
 
 if(USE_GETTEXT)
   find_package(Gettext)
-  foreach(lang da es hr it pt_BR sv zh_CN)
+  foreach(lang da es fr hr it pt_BR sv zh_CN)
     GETTEXT_PROCESS_PO_FILES(${lang} ALL PO_FILES ${CMAKE_CURRENT_LIST_DIR}/Translations/${lang}.po)
   endforeach(lang)
 endif()
@@ -742,7 +743,7 @@ if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  target_compile_options(${BIN_TARGET} PRIVATE "/W0")
+  target_compile_options(${BIN_TARGET} PRIVATE "/W1")
   target_compile_options(${BIN_TARGET} PRIVATE "/Zc:__cplusplus")
   target_compile_options(${BIN_TARGET} PRIVATE "/permissive-")
 endif()
