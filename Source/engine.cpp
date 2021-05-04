@@ -554,6 +554,7 @@ void SetPixel(const CelOutputBuffer &out, Point position, BYTE col)
 	if (!out.in_bounds(position))
 		return;
 
+	*out.at(position.x, position.y + 1) = 0; //set black pixel
 	*out.at(position.x, position.y) = col;
 }
 

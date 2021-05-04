@@ -33,7 +33,7 @@ enum MapColors : uint8_t {
 	/** color for bright map lines (doors, stairs etc.) */
 	MapColorsBright = PAL8_YELLOW,
 	/** color for dim map lines/dots */
-	MapColorsDim = (PAL16_YELLOW + 8),
+	MapColorsDim = (PAL16_YELLOW + 8 - 18),
 	/** color for items on automap */
 	MapColorsItem = (PAL8_BLUE + 1),
 };
