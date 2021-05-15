@@ -426,25 +426,16 @@ void LoadPlrGFX(int pnum, player_graphic gfxflag)
 			pAnim = player._pHAnim;
 			break;
 		case PFILE_LIGHTNING:
-			if (leveltype == DTYPE_TOWN) {
-				continue;
-			}
 			szCel = "LM";
 			pData = player._pLData;
 			pAnim = player._pLAnim;
 			break;
 		case PFILE_FIRE:
-			if (leveltype == DTYPE_TOWN) {
-				continue;
-			}
 			szCel = "FM";
 			pData = player._pFData;
 			pAnim = player._pFAnim;
 			break;
 		case PFILE_MAGIC:
-			if (leveltype == DTYPE_TOWN) {
-				continue;
-			}
 			szCel = "QM";
 			pData = player._pTData;
 			pAnim = player._pTAnim;
@@ -1607,31 +1598,29 @@ void StartSpell(int pnum, direction d, int cx, int cy)
 		return;
 	}
 
-	if (leveltype != DTYPE_TOWN) {
-		auto animationFlags = AnimationDistributionFlags::ProcessAnimationPending;
-		if (player._pmode == PM_SPELL)
-			animationFlags = static_cast<AnimationDistributionFlags>(animationFlags | AnimationDistributionFlags::RepeatedAction);
+	auto animationFlags = AnimationDistributionFlags::ProcessAnimationPending;
+	if (player._pmode == PM_SPELL)
+		animationFlags = static_cast<AnimationDistributionFlags>(animationFlags | AnimationDistributionFlags::RepeatedAction);
 
-		switch (spelldata[player._pSpell].sType) {
-		case STYPE_FIRE:
-			if ((player._pGFXLoad & PFILE_FIRE) == 0) {
-				LoadPlrGFX(pnum, PFILE_FIRE);
-			}
-			NewPlrAnim(player, player._pFAnim[d], player._pSFrames, 0, player._pSWidth, animationFlags, 0, player._pSFNum);
-			break;
-		case STYPE_LIGHTNING:
-			if ((player._pGFXLoad & PFILE_LIGHTNING) == 0) {
-				LoadPlrGFX(pnum, PFILE_LIGHTNING);
-			}
-			NewPlrAnim(player, player._pLAnim[d], player._pSFrames, 0, player._pSWidth, animationFlags, 0, player._pSFNum);
-			break;
-		case STYPE_MAGIC:
-			if ((player._pGFXLoad & PFILE_MAGIC) == 0) {
-				LoadPlrGFX(pnum, PFILE_MAGIC);
-			}
-			NewPlrAnim(player, player._pTAnim[d], player._pSFrames, 0, player._pSWidth, animationFlags, 0, player._pSFNum);
-			break;
+	switch (spelldata[player._pSpell].sType) {
+	case STYPE_FIRE:
+		if ((player._pGFXLoad & PFILE_FIRE) == 0) {
+			LoadPlrGFX(pnum, PFILE_FIRE);
 		}
+		NewPlrAnim(player, player._pFAnim[d], player._pSFrames, 0, player._pSWidth, animationFlags, 0, player._pSFNum);
+		break;
+	case STYPE_LIGHTNING:
+		if ((player._pGFXLoad & PFILE_LIGHTNING) == 0) {
+			LoadPlrGFX(pnum, PFILE_LIGHTNING);
+		}
+		NewPlrAnim(player, player._pLAnim[d], player._pSFrames, 0, player._pSWidth, animationFlags, 0, player._pSFNum);
+		break;
+	case STYPE_MAGIC:
+		if ((player._pGFXLoad & PFILE_MAGIC) == 0) {
+			LoadPlrGFX(pnum, PFILE_MAGIC);
+		}
+		NewPlrAnim(player, player._pTAnim[d], player._pSFrames, 0, player._pSWidth, animationFlags, 0, player._pSFNum);
+		break;
 	}
 
 	PlaySfxLoc(spelldata[player._pSpell].sSFX, player.position.tile.x, player.position.tile.y);
@@ -3084,13 +3073,7 @@ bool PM_DoSpell(int pnum)
 		}
 	}
 
-	if (leveltype == DTYPE_TOWN) {
-		if (player.AnimInfo.CurrentFrame > player._pSFrames) {
-			StartWalkStand(pnum);
-			ClearPlrPVars(player);
-			return true;
-		}
-	} else if (player.AnimInfo.CurrentFrame == player._pSFrames) {
+	if (player.AnimInfo.CurrentFrame >= player._pSFrames) {
 		StartStand(pnum, player._pdir);
 		ClearPlrPVars(player);
 		return true;
