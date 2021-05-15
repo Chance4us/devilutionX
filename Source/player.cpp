@@ -384,13 +384,14 @@ void LoadPlrGFX(int pnum, player_graphic gfxflag)
 		c = HeroClass::Warrior;
 	}
 
-	sprintf(prefix, "%c%c%c", CharChar[static_cast<std::size_t>(c)], ArmourChar[player._pgfxnum >> 4], WepChar[player._pgfxnum & 0xF]);
 	const char *cs = ClassPathTbl[static_cast<std::size_t>(c)];
 
 	for (unsigned i = 1; i <= PFILE_NONDEATH; i <<= 1) {
 		if ((i & gfxflag) == 0) {
 			continue;
 		}
+
+		bool useUnarmedAnimationInTown = false;
 
 		switch (i) {
 		case PFILE_STAND:
@@ -429,16 +430,19 @@ void LoadPlrGFX(int pnum, player_graphic gfxflag)
 			szCel = "LM";
 			pData = player._pLData;
 			pAnim = player._pLAnim;
+			useUnarmedAnimationInTown = true;
 			break;
 		case PFILE_FIRE:
 			szCel = "FM";
 			pData = player._pFData;
 			pAnim = player._pFAnim;
+			useUnarmedAnimationInTown = true;
 			break;
 		case PFILE_MAGIC:
 			szCel = "QM";
 			pData = player._pTData;
 			pAnim = player._pTAnim;
+			useUnarmedAnimationInTown = true;
 			break;
 		case PFILE_DEATH:
 			if ((player._pgfxnum & 0xF) != 0) {
@@ -464,6 +468,22 @@ void LoadPlrGFX(int pnum, player_graphic gfxflag)
 			app_fatal("PLR:2");
 		}
 
+		int weaponId = player._pgfxnum & 0xF;
+		if (leveltype == DTYPE_TOWN && useUnarmedAnimationInTown) {
+			// If the hero don't hold the weapon in town then we should use the unarmed animation for casting
+			switch (weaponId) {
+			case ANIM_ID_MACE:
+			case ANIM_ID_SWORD:
+				weaponId = ANIM_ID_UNARMED;
+				break;
+			case ANIM_ID_SWORD_SHIELD:
+			case ANIM_ID_MACE_SHIELD:
+				weaponId = ANIM_ID_UNARMED_SHIELD;
+				break;
+			}
+		}
+
+		sprintf(prefix, "%c%c%c", CharChar[static_cast<std::size_t>(c)], ArmourChar[player._pgfxnum >> 4], WepChar[weaponId]);
 		sprintf(pszName, "PlrGFX\\%s\\%s\\%s%s.CL2", cs, prefix, prefix, szCel);
 		LoadFileInMem(pszName, pData);
 		SetPlayerGPtrs(pData, pAnim);
