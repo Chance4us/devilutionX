@@ -565,9 +565,13 @@ bool ForceL3Trig()
 				strcpy(infostr, fmt::format(_("Up to Nest level {:d}"), currlevel - 17).c_str());
 				for (j = 0; j < numtrigs; j++) {
 					if (trigs[j]._tmsg == WM_DIABPREVLVL) {
-						cursmx = trigs[j].position.x;
-						cursmy = trigs[j].position.y;
-						return true;
+						dx = abs(trigs[j].position.x - cursmx);
+						dy = abs(trigs[j].position.y - cursmy);
+						if (dx < 4 && dy < 4) {
+							cursmx = trigs[j].position.x;
+							cursmy = trigs[j].position.y;
+							return true;
+						}
 					}
 				}
 			}
