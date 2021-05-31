@@ -111,6 +111,14 @@ void DrawItemNameLabels(const CelOutputBuffer &out)
 {
 	isLabelHighlighted = false;
 
+	if ( leveltype == DTYPE_TOWN ){
+		invertHighlightToggle = false;
+		return;
+	} else {
+		invertHighlightToggle = true;
+		return;
+	}
+
 	for (unsigned int i = 0; i < labelQueue.size(); ++i) {
 		std::unordered_set<int> backtrace;
 
