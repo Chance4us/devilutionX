@@ -2470,14 +2470,14 @@ bool PlrHitMonst(int pnum, int m)
 		if ((monster[m]._mhitpoints >> 6) <= 0) {
 			if (monster[m]._mmode == MM_STONE) {
 				M_StartKill(m, pnum);
-				monster[m]._mmode = MM_STONE;
+				monster[m].SetStoneMode();
 			} else {
 				M_StartKill(m, pnum);
 			}
 		} else {
 			if (monster[m]._mmode == MM_STONE) {
 				M_StartHit(m, pnum, dam);
-				monster[m]._mmode = MM_STONE;
+				monster[m].SetStoneMode();
 			} else {
 				if ((player._pIFlags & ISPL_KNOCKBACK) != 0) {
 					M_GetKnockback(m);
