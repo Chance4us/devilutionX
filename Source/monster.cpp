@@ -5422,6 +5422,7 @@ void MonsterStruct::CheckStandAnimationIsLoaded(int mdir)
 void MonsterStruct::SetStoneMode()
 {
 	_mmode = MM_STONE;
+	AnimInfo.IsFrozen = true;
 }
 
 } // namespace devilution
