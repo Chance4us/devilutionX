@@ -145,7 +145,7 @@ void LoadOptions()
 	sgOptions.Audio.nSoundVolume = getIniInt("Audio", "Sound Volume", VOLUME_MAX);
 	sgOptions.Audio.nMusicVolume = getIniInt("Audio", "Music Volume", VOLUME_MAX);
 	sgOptions.Audio.bWalkingSound = getIniBool("Audio", "Walking Sound", true);
-	sgOptions.Audio.bAutoEquipSound = getIniBool("Audio", "Auto Equip Sound", false);
+	sgOptions.Audio.bAutoEquipSound = getIniBool("Audio", "Auto Equip Sound", true);
 
 	sgOptions.Audio.nSampleRate = getIniInt("Audio", "Sample Rate", DEFAULT_AUDIO_SAMPLE_RATE);
 	sgOptions.Audio.nChannels = getIniInt("Audio", "Channels", DEFAULT_AUDIO_CHANNELS);
@@ -165,8 +165,8 @@ void LoadOptions()
 	sgOptions.Graphics.bUpscale = false;
 #endif
 	sgOptions.Graphics.bFitToScreen = getIniBool("Graphics", "Fit to Screen", true);
-	getIniValue("Graphics", "Scaling Quality", sgOptions.Graphics.szScaleQuality, sizeof(sgOptions.Graphics.szScaleQuality), "2");
-	sgOptions.Graphics.bIntegerScaling = getIniBool("Graphics", "Integer Scaling", false);
+	getIniValue("Graphics", "Scaling Quality", sgOptions.Graphics.szScaleQuality, sizeof(sgOptions.Graphics.szScaleQuality), "0");
+	sgOptions.Graphics.bIntegerScaling = getIniBool("Graphics", "Integer Scaling", true);
 	sgOptions.Graphics.bVSync = getIniBool("Graphics", "Vertical Sync", true);
 	sgOptions.Graphics.bBlendedTransparancy = getIniBool("Graphics", "Blended Transparency", true);
 	sgOptions.Graphics.nGammaCorrection = getIniInt("Graphics", "Gamma Correction", 100);
@@ -180,25 +180,25 @@ void LoadOptions()
 	sgOptions.Graphics.bShowFPS = (getIniInt("Graphics", "Show FPS", 0) != 0);
 
 	sgOptions.Gameplay.nTickRate = getIniInt("Game", "Speed", 20);
-	sgOptions.Gameplay.bRunInTown = getIniBool("Game", "Run in Town", false);
+	sgOptions.Gameplay.bRunInTown = getIniBool("Game", "Run in Town", true);
 	sgOptions.Gameplay.bGrabInput = getIniBool("Game", "Grab Input", false);
 	sgOptions.Gameplay.bTheoQuest = getIniBool("Game", "Theo Quest", false);
 	sgOptions.Gameplay.bCowQuest = getIniBool("Game", "Cow Quest", false);
-	sgOptions.Gameplay.bFriendlyFire = getIniBool("Game", "Friendly Fire", true);
-	sgOptions.Gameplay.bTestBard = getIniBool("Game", "Test Bard", false);
-	sgOptions.Gameplay.bTestBarbarian = getIniBool("Game", "Test Barbarian", false);
-	sgOptions.Gameplay.bExperienceBar = getIniBool("Game", "Experience Bar", false);
-	sgOptions.Gameplay.bEnemyHealthBar = getIniBool("Game", "Enemy Health Bar", false);
-	sgOptions.Gameplay.bAutoGoldPickup = getIniBool("Game", "Auto Gold Pickup", false);
+	sgOptions.Gameplay.bFriendlyFire = getIniBool("Game", "Friendly Fire", false);
+	sgOptions.Gameplay.bTestBard = getIniBool("Game", "Test Bard", true);
+	sgOptions.Gameplay.bTestBarbarian = getIniBool("Game", "Test Barbarian", true);
+	sgOptions.Gameplay.bExperienceBar = getIniBool("Game", "Experience Bar", true);
+	sgOptions.Gameplay.bEnemyHealthBar = getIniBool("Game", "Enemy Health Bar", true);
+	sgOptions.Gameplay.bAutoGoldPickup = getIniBool("Game", "Auto Gold Pickup", true);
 	sgOptions.Gameplay.bAdriaRefillsMana = getIniBool("Game", "Adria Refills Mana", false);
 	sgOptions.Gameplay.bAutoEquipWeapons = getIniBool("Game", "Auto Equip Weapons", true);
-	sgOptions.Gameplay.bAutoEquipArmor = getIniBool("Game", "Auto Equip Armor", false);
-	sgOptions.Gameplay.bAutoEquipHelms = getIniBool("Game", "Auto Equip Helms", false);
+	sgOptions.Gameplay.bAutoEquipArmor = getIniBool("Game", "Auto Equip Armor", true);
+	sgOptions.Gameplay.bAutoEquipHelms = getIniBool("Game", "Auto Equip Helms", true);
 	sgOptions.Gameplay.bAutoEquipShields = getIniBool("Game", "Auto Equip Shields", false);
-	sgOptions.Gameplay.bAutoEquipJewelry = getIniBool("Game", "Auto Equip Jewelry", false);
+	sgOptions.Gameplay.bAutoEquipJewelry = getIniBool("Game", "Auto Equip Jewelry", true);
 	sgOptions.Gameplay.bRandomizeQuests = getIniBool("Game", "Randomize Quests", true);
-	sgOptions.Gameplay.bShowMonsterType = getIniBool("Game", "Show Monster Type", false);
-	sgOptions.Gameplay.bDisableCripplingShrines = getIniBool("Game", "Disable Crippling Shrines", false);
+	sgOptions.Gameplay.bShowMonsterType = getIniBool("Game", "Show Monster Type", true);
+	sgOptions.Gameplay.bDisableCripplingShrines = getIniBool("Game", "Disable Crippling Shrines", true);
 
 	getIniValue("Network", "Bind Address", sgOptions.Network.szBindAddress, sizeof(sgOptions.Network.szBindAddress), "0.0.0.0");
 	sgOptions.Network.nPort = getIniInt("Network", "Port", 6112);
