@@ -4708,8 +4708,17 @@ bool objectIsDisabled(int i)
 	if ((Objects[i]._otype != OBJ_SHRINEL) && (Objects[i]._otype != OBJ_SHRINER))
 		return false;
 	if ((Objects[i]._oVar1 == ShrineFascinating)
-	    || (Objects[i]._oVar1 == ShrineOrnate)
-	    || (Objects[i]._oVar1 == ShrineSacred))
+		|| (Objects[i]._oVar1 == ShrineOrnate)
+		|| (Objects[i]._oVar1 == ShrineSacred)
+		|| (Objects[i]._oVar1 == ShrineEnchanted)
+		|| (Objects[i]._oVar1 == ShrineGloomy)
+		|| (Objects[i]._oVar1 == ShrineGlowing)
+		|| (Objects[i]._oVar1 == ShrineHidden)
+		|| (Objects[i]._oVar1 == ShrineHoly)
+		|| (Objects[i]._oVar1 == ShrineMendicant)
+		|| (Objects[i]._oVar1 == ShrineMurphys)
+		|| (Objects[i]._oVar1 == ShrineSecluded)
+		|| (Objects[i]._oVar1 == ShrineTainted))
 		return true;
 	return false;
 }
