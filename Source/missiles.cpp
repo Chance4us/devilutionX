@@ -2029,7 +2029,7 @@ void AddRndTeleport(int mi, Point src, Point dst, int /*midir*/, int8_t mienemy,
 		if (nTries > 500) {
 			r1 = 0;
 			r2 = 0;
-			break; //BUGFIX: warps player to 0/0 in hellfire, change to return or use 1.09's version of the code
+			return; //BUGFIX: warps player to 0/0 in hellfire, change to return or use 1.09's version of the code (applied return)
 		}
 		r1 = GenerateRnd(3) + 4;
 		r2 = GenerateRnd(3) + 4;
