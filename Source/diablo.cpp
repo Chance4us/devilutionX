@@ -130,9 +130,10 @@ QuickMessage QuickMessages[QUICK_MESSAGE_OPTIONS] = {
 	{ "QuickMessage4", N_("Now you DIE!") }
 };
 
-/** This and the following mouse variables are for handling in-game click-and-hold actions */
-MouseActionType LastMouseButtonAction = MouseActionType::None;
-uint32_t LastMouseButtonTime = 0;
+MouseActionType lastLeftMouseButtonAction = MouseActionType::None; // This and the following mouse variables are for handling in-game click-and-hold actions
+MouseActionType lastRightMouseButtonAction = MouseActionType::None;
+Uint32 lastLeftMouseButtonTime = 0;
+Uint32 lastRightMouseButtonTime = 0;
 
 // Controller support: Actions to run after updating the cursor state.
 // Defined in SourceX/controls/plctrls.cpp.
@@ -250,21 +251,20 @@ bool LeftMouseCmd(bool bShift)
 		if (pcursitem != -1 && pcurs == CURSOR_HAND && !bShift) {
 			NetSendCmdLocParam1(true, invflag ? CMD_GOTOGETITEM : CMD_GOTOAGETITEM, { cursmx, cursmy }, pcursitem);
 		} else if (pcursobj != -1 && (!objectIsDisabled(pcursobj)) && (!bShift || (bNear && Objects[pcursobj]._oBreak == 1))) {
-			LastMouseButtonAction = MouseActionType::OperateObject;
 			NetSendCmdLocParam1(true, pcurs == CURSOR_DISARM ? CMD_DISARMXY : CMD_OPOBJXY, { cursmx, cursmy }, pcursobj);
 		} else if (myPlayer.UsesRangedWeapon()) {
 			if (bShift) {
-				LastMouseButtonAction = MouseActionType::Attack;
+				lastLeftMouseButtonAction = MouseActionType::Attack;
 				NetSendCmdLoc(MyPlayerId, true, CMD_RATTACKXY, { cursmx, cursmy });
 			} else if (pcursmonst != -1) {
 				if (CanTalkToMonst(Monsters[pcursmonst])) {
 					NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 				} else {
-					LastMouseButtonAction = MouseActionType::AttackMonsterTarget;
+					lastLeftMouseButtonAction = MouseActionType::Attack_MonsterTarget;
 					NetSendCmdParam1(true, CMD_RATTACKID, pcursmonst);
 				}
 			} else if (pcursplr != -1 && !gbFriendlyMode) {
-				LastMouseButtonAction = MouseActionType::AttackPlayerTarget;
+				lastLeftMouseButtonAction = MouseActionType::Attack_PlayerTarget;
 				NetSendCmdParam1(true, CMD_RATTACKPID, pcursplr);
 			}
 		} else {
@@ -273,18 +273,18 @@ bool LeftMouseCmd(bool bShift)
 					if (CanTalkToMonst(Monsters[pcursmonst])) {
 						NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 					} else {
-						LastMouseButtonAction = MouseActionType::Attack;
+						lastLeftMouseButtonAction = MouseActionType::Attack;
 						NetSendCmdLoc(MyPlayerId, true, CMD_SATTACKXY, { cursmx, cursmy });
 					}
 				} else {
-					LastMouseButtonAction = MouseActionType::Attack;
+					lastLeftMouseButtonAction = MouseActionType::Attack;
 					NetSendCmdLoc(MyPlayerId, true, CMD_SATTACKXY, { cursmx, cursmy });
 				}
 			} else if (pcursmonst != -1) {
-				LastMouseButtonAction = MouseActionType::AttackMonsterTarget;
+				lastLeftMouseButtonAction = MouseActionType::Attack_MonsterTarget;
 				NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 			} else if (pcursplr != -1 && !gbFriendlyMode) {
-				LastMouseButtonAction = MouseActionType::AttackPlayerTarget;
+				lastLeftMouseButtonAction = MouseActionType::Attack_PlayerTarget;
 				NetSendCmdParam1(true, CMD_ATTACKPID, pcursplr);
 			}
 		}
@@ -297,8 +297,8 @@ bool LeftMouseCmd(bool bShift)
 
 bool LeftMouseDown(int wParam)
 {
-	LastMouseButtonAction = MouseActionType::Other;
-	LastMouseButtonTime = SDL_GetTicks();
+	lastLeftMouseButtonAction = MouseActionType::Other;
+	lastLeftMouseButtonTime = SDL_GetTicks();
 
 	if (gmenu_left_mouse(true))
 		return false;
@@ -388,8 +388,8 @@ void LeftMouseUp(int wParam)
 
 void RightMouseDown()
 {
-	LastMouseButtonAction = MouseActionType::Other;
-	LastMouseButtonTime = SDL_GetTicks();
+	lastRightMouseButtonAction = MouseActionType::Other;
+	lastRightMouseButtonTime = SDL_GetTicks();
 
 	if (gmenu_is_active() || sgnTimeoutCurs != CURSOR_NONE || PauseMode == 2 || Players[MyPlayerId]._pInvincible) {
 		return;
@@ -739,8 +739,9 @@ void GameEventHandler(uint32_t uMsg, int32_t wParam, int32_t lParam)
 		return;
 	case DVL_WM_LBUTTONUP:
 		GetMousePos(lParam);
+		lastLeftMouseButtonAction = MouseActionType::None;
 		if (sgbMouseDown == CLICK_LEFT) {
-			LastMouseButtonAction = MouseActionType::None;
+			//LastMouseButtonAction = MouseActionType::None;/*???????*/
 			sgbMouseDown = CLICK_NONE;
 			LeftMouseUp(wParam);
 			track_repeat_walk(false);
@@ -755,8 +756,9 @@ void GameEventHandler(uint32_t uMsg, int32_t wParam, int32_t lParam)
 		return;
 	case DVL_WM_RBUTTONUP:
 		GetMousePos(lParam);
+		lastRightMouseButtonAction = MouseActionType::None;
 		if (sgbMouseDown == CLICK_RIGHT) {
-			LastMouseButtonAction = MouseActionType::None;
+			//LastMouseButtonAction = MouseActionType::None;/*????????*/
 			sgbMouseDown = CLICK_NONE;
 		}
 		return;
