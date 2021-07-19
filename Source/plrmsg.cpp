@@ -14,17 +14,32 @@
 
 namespace devilution {
 
+namespace {
+
 #define PMSG_COUNT 8
 
-static BYTE plr_msg_slot;
+uint8_t plr_msg_slot;
 _plrmsg plr_msgs[PMSG_COUNT];
 
 /** Maps from player_num to text color, as used in chat messages. */
 const UiFlags TextColorFromPlayerId[MAX_PLRS + 1] = { UIS_SILVER, UIS_SILVER, UIS_SILVER, UIS_SILVER, UIS_GOLD };
 
+void PrintChatMessage(const Surface &out, int x, int y, int width, char *text, uint16_t style)
+{
+	int length = strlen(text);
+	for (int i = 0; i < length; i++) {
+		if (text[i] == '\n')
+			text[i] = ' ';
+	}
+	WordWrapGameString(text, width);
+	DrawString(out, text, { { x, y }, { width, 0 } }, style, 1, 10);
+}
+
+} // namespace
+
 void plrmsg_delay(bool delay)
 {
-	static DWORD plrmsgTicks;
+	static uint32_t plrmsgTicks;
 
 	if (delay) {
 		plrmsgTicks = -SDL_GetTicks();
@@ -76,7 +91,7 @@ void SendPlrMsg(int pnum, const char *pszStr)
 void ClearPlrMsg()
 {
 	_plrmsg *pMsg = plr_msgs;
-	DWORD tick = SDL_GetTicks();
+	uint32_t tick = SDL_GetTicks();
 
 	for (int i = 0; i < PMSG_COUNT; i++, pMsg++) {
 		if ((int)(tick - pMsg->time) > 10000)
@@ -88,17 +103,6 @@ void InitPlrMsg()
 {
 	memset(plr_msgs, 0, sizeof(plr_msgs));
 	plr_msg_slot = 0;
-}
-
-static void PrintPlrMsg(const Surface &out, int x, int y, int width, char *text, uint16_t style)
-{
-	int length = strlen(text);
-	for (int i = 0; i < length; i++) {
-		if (text[i] == '\n')
-			text[i] = ' ';
-	}
-	WordWrapGameString(text, width);
-	DrawString(out, text, { { x, y }, { width, 0 } }, style, 1, 10);
 }
 
 void DrawPlrMsg(const Surface &out)
@@ -121,7 +125,7 @@ void DrawPlrMsg(const Surface &out)
 	pMsg = plr_msgs;
 	for (int i = 0; i < PMSG_COUNT; i++) {
 		if (pMsg->str[0] != '\0')
-			PrintPlrMsg(out, x, y, width, pMsg->str, TextColorFromPlayerId[pMsg->player]);
+			PrintChatMessage(out, x, y, width, pMsg->str, TextColorFromPlayerId[pMsg->player]);
 		pMsg++;
 		y += 35;
 	}

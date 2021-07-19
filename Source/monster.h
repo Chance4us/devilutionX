@@ -115,10 +115,20 @@ enum placeflag : uint8_t {
 	// clang-format on
 };
 
-enum class MonsterRelation : uint8_t {
-	Individual,
-	Minion,
-	Leader,
+/**
+ * @brief Defines the relation of the monster to a monster pack.
+ *        If value is differnt from Individual MonsterStruct.leader must also be set
+ */
+enum class LeaderRelation : uint8_t {
+	None,
+	/**
+	 * @brief Minion that sticks with the leader
+	 */
+	Leashed,
+	/**
+	 * @brief Minion that was separated from leader and acts individual until it reaches the leader again
+	 */
+	Separated,
 };
 
 struct AnimStruct {
@@ -199,7 +209,7 @@ struct MonsterStruct { // note: missing field _mAFNum
 	uint16_t mMagicRes;
 	_speech_id mtalkmsg;
 	uint8_t leader;
-	MonsterRelation leaderflag;
+	LeaderRelation leaderRelation;
 	uint8_t packsize;
 	int8_t mlid; // BUGFIX -1 is used when not emitting light this should be signed (fixed)
 	const char *mName;
@@ -255,16 +265,16 @@ void DeleteMonsterList();
 void ProcessMonsters();
 void FreeMonsters();
 bool DirOK(int i, Direction mdir);
-bool PosOkMissile(int entity, Point position);
+bool PosOkMissile(Point position);
 bool LineClearMissile(Point startPoint, Point endPoint);
-bool LineClear(bool (*Clear)(int, Point), int entity, Point startPoint, Point endPoint);
+bool LineClear(const std::function<bool(Point)> &clear, Point startPoint, Point endPoint);
 void SyncMonsterAnim(MonsterStruct &monster);
 void M_FallenFear(Point position);
 void PrintMonstHistory(int mt);
 void PrintUniqueHistory();
 void PlayEffect(MonsterStruct &monster, int mode);
 void MissToMonst(int i, Point position);
-bool MonsterIsTileAvalible(int i, Point position);
+bool IsTileAvailable(const MonsterStruct &monster, Point position);
 bool IsSkel(int mt);
 bool IsGoat(int mt);
 bool SpawnSkeleton(int ii, Point position);

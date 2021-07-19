@@ -313,7 +313,7 @@ typedef std::vector<std::unique_ptr<UiListItem>> vUiListItem;
 class UiList : public UiItemBase {
 public:
 	UiList(const vUiListItem &vItems, Sint16 x, Sint16 y, Uint16 item_width, Uint16 item_height, int flags = 0)
-	    : UiItemBase(x, y, item_width, item_height * vItems.size(), flags)
+	    : UiItemBase(x, y, item_width, static_cast<Uint16>(item_height * vItems.size()), flags)
 	{
 		m_type = UI_LIST;
 		for (auto &item : vItems)
@@ -340,7 +340,7 @@ public:
 	int indexAt(Sint16 y) const
 	{
 		ASSERT(y >= m_rect.y);
-		const std::size_t index = (y - m_rect.y) / m_height;
+		const size_t index = (y - m_rect.y) / m_height;
 		ASSERT(index < m_vecItems.size());
 		return index;
 	}

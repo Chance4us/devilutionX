@@ -374,7 +374,7 @@ void LoadPlayer(LoadHelper *file, int p)
 	for (auto &spellType : player._pSplTHotKey)
 		spellType = static_cast<spell_type>(file->NextLE<int8_t>());
 
-	player._pwtype = static_cast<player_weapon_type>(file->NextLE<int32_t>());
+	file->Skip<int32_t>(); // Skip _pwtype
 	player._pBlockFlag = file->NextBool8();
 	player._pInvincible = file->NextBool8();
 	player._pLightRad = file->NextLE<int8_t>();
@@ -619,7 +619,7 @@ void LoadMonster(LoadHelper *file, MonsterStruct &monster)
 	if (monster.mtalkmsg == TEXT_KING1) // Fix original bad mapping of NONE for monsters
 		monster.mtalkmsg = TEXT_NONE;
 	monster.leader = file->NextLE<uint8_t>();
-	monster.leaderflag = static_cast<MonsterRelation>(file->NextLE<uint8_t>());
+	monster.leaderRelation = static_cast<LeaderRelation>(file->NextLE<uint8_t>());
 	monster.packsize = file->NextLE<uint8_t>();
 	monster.mlid = file->NextLE<int8_t>();
 	if (monster.mlid == Players[MyPlayerId]._plid)
@@ -1047,7 +1047,7 @@ void SavePlayer(SaveHelper *file, int p)
 	for (auto &spellType : player._pSplTHotKey)
 		file->WriteLE<int8_t>(spellType);
 
-	file->WriteLE<int32_t>(player._pwtype);
+	file->WriteLE<int32_t>(player.UsesRangedWeapon() ? 1 : 0);
 	file->WriteLE<uint8_t>(player._pBlockFlag ? 1 : 0);
 	file->WriteLE<uint8_t>(player._pInvincible ? 1 : 0);
 	file->WriteLE<int8_t>(player._pLightRad);
@@ -1275,7 +1275,7 @@ void SaveMonster(SaveHelper *file, MonsterStruct &monster)
 
 	file->WriteLE<int32_t>(monster.mtalkmsg == TEXT_NONE ? 0 : monster.mtalkmsg); // Replicate original bad mapping of none for monsters
 	file->WriteLE<uint8_t>(monster.leader);
-	file->WriteLE<uint8_t>(static_cast<std::uint8_t>(monster.leaderflag));
+	file->WriteLE<uint8_t>(static_cast<std::uint8_t>(monster.leaderRelation));
 	file->WriteLE<uint8_t>(monster.packsize);
 	file->WriteLE<int8_t>(monster.mlid);
 
@@ -1841,7 +1841,6 @@ void LoadGame(bool firstflag)
 	RedoPlayerVision();
 	ProcessVisionList();
 	missiles_process_charge();
-	ResetPal();
 	NewCursor(CURSOR_HAND);
 	gbProcessPlayers = true;
 

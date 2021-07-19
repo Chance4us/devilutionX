@@ -398,14 +398,6 @@ struct DJunk {
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct TMegaPkt {
-	struct TMegaPkt *pNext;
-	uint32_t dwSpaceLeft;
-	byte data[32000];
-};
-#pragma pack(pop)
-
 struct TBuffer {
 	uint32_t dwNextWriteOffset;
 	byte bData[4096];
@@ -443,10 +435,10 @@ void NetSendCmdPItem(bool bHiPri, _cmd_id bCmd, Point position);
 void NetSendCmdChItem(bool bHiPri, BYTE bLoc);
 void NetSendCmdDelItem(bool bHiPri, BYTE bLoc);
 void NetSendCmdDItem(bool bHiPri, int ii);
-void NetSendCmdDamage(bool bHiPri, uint8_t bPlr, DWORD dwDam);
-void NetSendCmdMonDmg(bool bHiPri, uint16_t wMon, DWORD dwDam);
+void NetSendCmdDamage(bool bHiPri, uint8_t bPlr, uint32_t dwDam);
+void NetSendCmdMonDmg(bool bHiPri, uint16_t wMon, uint32_t dwDam);
 void NetSendCmdString(uint32_t pmask, const char *pszStr);
 void delta_close_portal(int pnum);
-DWORD ParseCmd(int pnum, TCmd *pCmd);
+uint32_t ParseCmd(int pnum, TCmd *pCmd);
 
 } // namespace devilution

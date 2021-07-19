@@ -14,7 +14,7 @@
 #include "dthread.h"
 #include "engine/point.hpp"
 #include "engine/random.hpp"
-#include "mainmenu.h"
+#include "menu.h"
 #include "nthread.h"
 #include "options.h"
 #include "pfile.h"
@@ -24,6 +24,7 @@
 #include "tmsg.h"
 #include "utils/endian.hpp"
 #include "utils/language.h"
+#include "utils/stdcompat/cstddef.hpp"
 
 namespace devilution {
 
@@ -34,7 +35,6 @@ uint16_t sgwPackPlrOffsetTbl[MAX_PLRS];
 PkPlayerStruct netplr[MAX_PLRS];
 bool sgbPlayerTurnBitTbl[MAX_PLRS];
 bool sgbPlayerLeftGameTbl[MAX_PLRS];
-DWORD sgbSentThisCycle;
 bool gbShouldValidatePackage;
 BYTE gbActivePlayers;
 bool gbGameDestroyed;
@@ -67,6 +67,8 @@ const event_type EventTypes[3] = {
 };
 
 namespace {
+
+uint32_t sgbSentThisCycle;
 
 void BufferInit(TBuffer *pBuf)
 {
@@ -301,20 +303,20 @@ void HandleAllPackets(int pnum, byte *pData, size_t nSize)
 
 void ProcessTmsgs()
 {
-	size_t cnt;
-	TPkt pkt;
+	uint8_t cnt;
+	std::unique_ptr<byte[]> msg;
 
-	while ((cnt = tmsg_get((byte *)&pkt)) != 0) {
-		HandleAllPackets(MyPlayerId, (byte *)&pkt, cnt);
-	}
+	while ((cnt = tmsg_get(&msg)) != 0)
+		HandleAllPackets(MyPlayerId, msg.get(), cnt);
 }
 
 void SendPlayerInfo(int pnum, _cmd_id cmd)
 {
-	PkPlayerStruct pkplr;
+	static_assert(alignof(PkPlayerStruct) == 1, "Fix pkplr alignment");
+	std::unique_ptr<byte[]> pkplr { new byte[sizeof(PkPlayerStruct)] };
 
-	PackPlayer(&pkplr, Players[MyPlayerId], true);
-	dthread_send_delta(pnum, cmd, (byte *)&pkplr, sizeof(pkplr));
+	PackPlayer(reinterpret_cast<PkPlayerStruct *>(pkplr.get()), Players[MyPlayerId], true);
+	dthread_send_delta(pnum, cmd, std::move(pkplr), sizeof(PkPlayerStruct));
 }
 
 dungeon_type InitLevelType(int l)
@@ -779,7 +781,7 @@ void recv_plrinfo(int pnum, TCmdPlrInfoHdr *p, bool recv)
 	if (MyPlayerId == pnum) {
 		return;
 	}
-	assert((DWORD)pnum < MAX_PLRS);
+	assert(pnum >= 0 && pnum < MAX_PLRS);
 	auto &player = Players[pnum];
 
 	if (sgwPackPlrOffsetTbl[pnum] != p->wOffset) {

@@ -348,7 +348,7 @@ set(libdevilutionx_SRCS
   Source/items.cpp
   Source/lighting.cpp
   Source/loadsave.cpp
-  Source/mainmenu.cpp
+  Source/menu.cpp
   Source/minitext.cpp
   Source/misdat.cpp
   Source/missiles.cpp
@@ -531,6 +531,7 @@ if(RUN_TESTS)
     test/main.cpp
     test/missiles_test.cpp
     test/pack_test.cpp
+    test/path_test.cpp
     test/player_test.cpp
     test/quests_test.cpp
     test/random_test.cpp
@@ -835,6 +836,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   target_compile_options(libdevilutionx PUBLIC "/W3")
+  target_compile_definitions(libdevilutionx PUBLIC _CRT_SECURE_NO_WARNINGS)
   target_compile_options(libdevilutionx PUBLIC "/Zc:__cplusplus")
 endif()
 

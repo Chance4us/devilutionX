@@ -91,7 +91,7 @@ int GetDistance(Point destination, int maxDistance)
 	}
 
 	int8_t walkpath[MAX_PATH_LENGTH];
-	int steps = FindPath(PosOkPlayer, MyPlayerId, Players[MyPlayerId].position.future.x, Players[MyPlayerId].position.future.y, destination.x, destination.y, walkpath);
+	int steps = FindPath([](Point position) { return PosOkPlayer(MyPlayerId, position); }, Players[MyPlayerId].position.future, destination, walkpath);
 	if (steps > maxDistance)
 		return 0;
 
@@ -208,8 +208,8 @@ void FindRangedTarget()
 	int distance = 0;
 	bool canTalk = false;
 
-	// The first MAX_PLRS monsters are reserved for players' golems.
-	for (int mi = MAX_PLRS; mi < MAXMONSTERS; mi++) {
+	for (int i = 0; i < ActiveMonsterCount; i++) {
+		int mi = ActiveMonsters[i];
 		const auto &monster = Monsters[mi];
 
 		if (!CanTargetMonster(monster))
@@ -293,10 +293,7 @@ void FindMeleeTarget()
 				continue;
 			}
 
-			PATHNODE pPath;
-			pPath.position = { node.x, node.y };
-
-			if (path_solid_pieces(&pPath, dx, dy)) {
+			if (path_solid_pieces({ node.x, node.y }, { dx, dy })) {
 				queue.push_back({ dx, dy, node.steps + 1 });
 				visited[dx][dy] = true;
 			}
@@ -306,7 +303,7 @@ void FindMeleeTarget()
 
 void CheckMonstersNearby()
 {
-	if (Players[MyPlayerId]._pwtype == WT_RANGED || HasRangedSpell()) {
+	if (Players[MyPlayerId].UsesRangedWeapon() || HasRangedSpell()) {
 		FindRangedTarget();
 		return;
 	}
@@ -340,7 +337,7 @@ void CheckPlayerNearby()
 		    || (player._pHitPoints == 0 && spl != SPL_RESURRECT))
 			continue;
 
-		if (myPlayer._pwtype == WT_RANGED || HasRangedSpell() || spl == SPL_HEALOTHER) {
+		if (myPlayer.UsesRangedWeapon() || HasRangedSpell() || spl == SPL_HEALOTHER) {
 			newDdistance = GetDistanceRanged(player.position.future);
 		} else {
 			newDdistance = GetDistance(player.position.future, distance);
@@ -443,13 +440,13 @@ void Interact()
 	if (leveltype == DTYPE_TOWN && pcursmonst != -1) {
 		NetSendCmdLocParam1(true, CMD_TALKXY, Towners[pcursmonst].position, pcursmonst);
 	} else if (pcursmonst != -1) {
-		if (Players[MyPlayerId]._pwtype != WT_RANGED || CanTalkToMonst(Monsters[pcursmonst])) {
+		if (!Players[MyPlayerId].UsesRangedWeapon() || CanTalkToMonst(Monsters[pcursmonst])) {
 			NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 		} else {
 			NetSendCmdParam1(true, CMD_RATTACKID, pcursmonst);
 		}
 	} else if (leveltype != DTYPE_TOWN && pcursplr != -1 && !gbFriendlyMode) {
-		NetSendCmdParam1(true, Players[MyPlayerId]._pwtype == WT_RANGED ? CMD_RATTACKPID : CMD_ATTACKPID, pcursplr);
+		NetSendCmdParam1(true, Players[MyPlayerId].UsesRangedWeapon() ? CMD_RATTACKPID : CMD_ATTACKPID, pcursplr);
 	}
 }
 
@@ -1051,7 +1048,7 @@ bool IsPathBlocked(Point position, Direction dir)
 	auto leftStep { position + d1 };
 	auto rightStep { position + d2 };
 
-	if (!nSolidTable[dPiece[leftStep.x][leftStep.y]] && !nSolidTable[dPiece[rightStep.x][rightStep.y]])
+	if (IsTileNotSolid(leftStep) && IsTileNotSolid(rightStep))
 		return false;
 
 	return !PosOkPlayer(MyPlayerId, leftStep) && !PosOkPlayer(MyPlayerId, rightStep);
@@ -1191,7 +1188,7 @@ struct RightStickAccumulator {
 		lastTc = SDL_GetTicks();
 	}
 
-	DWORD lastTc;
+	uint32_t lastTc;
 	float hiresDX;
 	float hiresDY;
 };

@@ -13,25 +13,52 @@
 namespace devilution {
 
 BYTE sgbNetUpdateRate;
-DWORD gdwMsgLenTbl[MAX_PLRS];
-static CCritSect sgMemCrit;
+size_t gdwMsgLenTbl[MAX_PLRS];
+uint32_t gdwTurnsInTransit;
+uintptr_t glpMsgTbl[MAX_PLRS];
+uint32_t gdwLargestMsgSize;
+uint32_t gdwNormalMsgSize;
+float gfProgressToNextGameTick = 0.0;
+
+namespace {
+
+CCritSect sgMemCrit;
 DWORD gdwDeltaBytesSec;
 bool nthread_should_run;
-DWORD gdwTurnsInTransit;
-uintptr_t glpMsgTbl[MAX_PLRS];
 SDL_threadID glpNThreadId;
 char sgbSyncCountdown;
 uint32_t turn_upper_bit;
 bool sgbTicsOutOfSync;
 char sgbPacketCountdown;
 bool sgbThreadIsRunning;
-DWORD gdwLargestMsgSize;
-DWORD gdwNormalMsgSize;
 int last_tick;
-float gfProgressToNextGameTick = 0.0;
+SDL_Thread *sghThread = nullptr;
 
-/* data */
-static SDL_Thread *sghThread = nullptr;
+void NthreadHandler()
+{
+	if (!nthread_should_run) {
+		return;
+	}
+
+	while (true) {
+		sgMemCrit.Enter();
+		if (!nthread_should_run) {
+			sgMemCrit.Leave();
+			break;
+		}
+		nthread_send_and_recv_turn(0, 0);
+		int delta = gnTickDelay;
+		if (nthread_recv_turns())
+			delta = last_tick - SDL_GetTicks();
+		sgMemCrit.Leave();
+		if (delta > 0)
+			SDL_Delay(delta);
+		if (!nthread_should_run)
+			return;
+	}
+}
+
+} // namespace
 
 void nthread_terminate_game(const char *pszFcn)
 {
@@ -88,7 +115,7 @@ bool nthread_recv_turns(bool *pfSendAsync)
 		last_tick += gnTickDelay;
 		return true;
 	}
-	if (!SNetReceiveTurns(0, MAX_PLRS, (char **)glpMsgTbl, (unsigned int *)gdwMsgLenTbl, &player_state[0])) {
+	if (!SNetReceiveTurns(MAX_PLRS, (char **)glpMsgTbl, gdwMsgLenTbl, &player_state[0])) {
 		if (SErrGetLastError() != STORM_ERROR_NO_MESSAGES_WAITING)
 			nthread_terminate_game("SNetReceiveTurns");
 		sgbTicsOutOfSync = false;
@@ -108,30 +135,6 @@ bool nthread_recv_turns(bool *pfSendAsync)
 	return true;
 }
 
-static void NthreadHandler()
-{
-	if (!nthread_should_run) {
-		return;
-	}
-
-	while (true) {
-		sgMemCrit.Enter();
-		if (!nthread_should_run) {
-			sgMemCrit.Leave();
-			break;
-		}
-		nthread_send_and_recv_turn(0, 0);
-		int delta = gnTickDelay;
-		if (nthread_recv_turns())
-			delta = last_tick - SDL_GetTicks();
-		sgMemCrit.Leave();
-		if (delta > 0)
-			SDL_Delay(delta);
-		if (!nthread_should_run)
-			return;
-	}
-}
-
 void nthread_set_turn_upper_bit()
 {
 	turn_upper_bit = 0x80000000;
@@ -139,10 +142,6 @@ void nthread_set_turn_upper_bit()
 
 void nthread_start(bool setTurnUpperBit)
 {
-	const char *err;
-	DWORD largestMsgSize;
-	_SNETCAPS caps;
-
 	last_tick = SDL_GetTicks();
 	sgbPacketCountdown = 1;
 	sgbSyncCountdown = 1;
@@ -151,6 +150,7 @@ void nthread_start(bool setTurnUpperBit)
 		nthread_set_turn_upper_bit();
 	else
 		turn_upper_bit = 0;
+	_SNETCAPS caps;
 	caps.size = 36;
 	SNetGetProviderCaps(&caps);
 	gdwTurnsInTransit = caps.defaultturnsintransit;
@@ -160,7 +160,7 @@ void nthread_start(bool setTurnUpperBit)
 		sgbNetUpdateRate = 20 / caps.defaultturnssec;
 	else
 		sgbNetUpdateRate = 1;
-	largestMsgSize = 512;
+	uint32_t largestMsgSize = 512;
 	if (caps.maxmessagesize < 0x200)
 		largestMsgSize = caps.maxmessagesize;
 	gdwDeltaBytesSec = caps.bytessec / 4;
@@ -183,7 +183,7 @@ void nthread_start(bool setTurnUpperBit)
 		nthread_should_run = true;
 		sghThread = CreateThread(NthreadHandler, &glpNThreadId);
 		if (sghThread == nullptr) {
-			err = SDL_GetError();
+			const char *err = SDL_GetError();
 			app_fatal("nthread2:\n%s", err);
 		}
 	}
