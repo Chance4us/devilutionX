@@ -24,7 +24,7 @@
 #include "missiles.h"
 #include "nthread.h"
 #include "plrmsg.h"
-#include "qol/itemlabels.h"
+#include "qol/labels.h"
 #include "qol/monhealthbar.h"
 #include "qol/xpbar.h"
 #include "stores.h"
@@ -641,6 +641,9 @@ static void DrawObject(const Surface &out, int x, int y, int ox, int oy, bool pr
 	} else {
 		CelClippedDrawTo(out, objectPosition, cel, Objects[bv]._oAnimFrame);
 	}
+	// only add labels for positive indexes as negative ones are just parts of one object, displaying labels for them would display multiple ones for a single object
+	if (dObject[x][y] > 0)
+		AddObjectToLabelQueue(bv, objectPosition.x, objectPosition.y);
 }
 
 static void DrawDungeon(const Surface & /*out*/, int /*sx*/, int /*sy*/, int /*dx*/, int /*dy*/);
@@ -1360,7 +1363,7 @@ void DrawView(const Surface &out, int startX, int startY)
 		DrawAutomap(out.subregionY(0, gnViewportHeight));
 	}
 	DrawMonsterHealthBar(out);
-	DrawItemNameLabels(out);
+	DrawLabels(out);
 
 	if (stextflag != STORE_NONE && !qtextflag)
 		DrawSText(out);
