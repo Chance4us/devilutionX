@@ -46,10 +46,10 @@ enum class GameLogicStep {
 enum class MouseActionType : int {
 	None,
 	Spell,
-	SpellOutOfMana,
+	Spell_ComplainedAboutMana,
 	Attack,
-	AttackMonsterTarget,
-	AttackPlayerTarget,
+	Attack_MonsterTarget,
+	Attack_PlayerTarget,
 	OperateObject,
 	Other,
 };
@@ -80,8 +80,10 @@ extern clicktype sgbMouseDown;
 extern uint16_t gnTickDelay;
 extern char gszProductName[64];
 
-extern MouseActionType LastMouseButtonAction;
-extern uint32_t LastMouseButtonTime;
+extern MouseActionType lastLeftMouseButtonAction;
+extern MouseActionType lastRightMouseButtonAction;
+extern Uint32 lastLeftMouseButtonTime;
+extern Uint32 lastRightMouseButtonTime;
 
 void FreeGameMem();
 bool StartGame(bool bNewGame, bool bSinglePlayer);
