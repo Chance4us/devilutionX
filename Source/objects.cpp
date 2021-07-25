@@ -5457,7 +5457,7 @@ void GetObjectStr(int i)
 		}
 	}
 	if (objectIsDisabled(i)) {
-		strcpy(tempstr, fmt::format(_(/* TRANSLATORS: If user enabled diablo.ini setting "Disable Crippling Shrines" is set to 1; also used for Na-Kruls leaver */ "{:s} (disabled)"), infostr).c_str());
+		strcpy(tempstr, fmt::format(_(/* TRANSLATORS: If user enabled diablo.ini setting "Disable Crippling Shrines" is set to 1; also used for Na-Kruls leaver */ "{:s}/* (disabled)*/"), infostr).c_str());
 		strcpy(infostr, tempstr);
 		infoclr = UIS_RED;
 	}
