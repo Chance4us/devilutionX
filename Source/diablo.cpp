@@ -431,8 +431,8 @@ void ReleaseKey(int vkey)
 		CaptureScreen();
 	if (vkey == DVL_VK_MENU || vkey == DVL_VK_LMENU || vkey == DVL_VK_RMENU)
 		AltPressed(false);
-	if (vkey == DVL_VK_CONTROL || vkey == DVL_VK_LCONTROL || vkey == DVL_VK_RCONTROL)
-		ToggleItemLabelHighlight();
+	//if (vkey == DVL_VK_CONTROL || vkey == DVL_VK_LCONTROL || vkey == DVL_VK_RCONTROL)
+		//ToggleItemLabelHighlight();
 }
 
 void ClosePanels()
