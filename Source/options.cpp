@@ -262,8 +262,8 @@ void LoadOptions()
 	sgOptions.Gameplay.nTickRate = GetIniInt("Game", "Speed", 20);
 	sgOptions.Gameplay.bRunInTown = GetIniBool("Game", "Run in Town", true);
 	sgOptions.Gameplay.bGrabInput = GetIniBool("Game", "Grab Input", false);
-	sgOptions.Gameplay.bTheoQuest = GetIniBool("Game", "Theo Quest", true);
-	sgOptions.Gameplay.bCowQuest = GetIniBool("Game", "Cow Quest", true);
+	sgOptions.Gameplay.bTheoQuest = GetIniBool("Game", "Theo Quest", false);
+	sgOptions.Gameplay.bCowQuest = GetIniBool("Game", "Cow Quest", false);
 	sgOptions.Gameplay.bFriendlyFire = GetIniBool("Game", "Friendly Fire", false);
 	sgOptions.Gameplay.bTestBard = GetIniBool("Game", "Test Bard", true);
 	sgOptions.Gameplay.bTestBarbarian = GetIniBool("Game", "Test Barbarian", true);
