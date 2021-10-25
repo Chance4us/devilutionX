@@ -226,8 +226,8 @@ void LoadOptions()
 	sgOptions.Audio.nSoundVolume = GetIniInt("Audio", "Sound Volume", VOLUME_MAX);
 	sgOptions.Audio.nMusicVolume = GetIniInt("Audio", "Music Volume", VOLUME_MAX);
 	sgOptions.Audio.bWalkingSound = GetIniBool("Audio", "Walking Sound", true);
-	sgOptions.Audio.bAutoEquipSound = GetIniBool("Audio", "Auto Equip Sound", AUTO_PICKUP_DEFAULT(false));
-	sgOptions.Audio.bItemPickupSound = GetIniBool("Audio", "Item Pickup Sound", AUTO_PICKUP_DEFAULT(false));
+	sgOptions.Audio.bAutoEquipSound = GetIniBool("Audio", "Auto Equip Sound", AUTO_PICKUP_DEFAULT(true));
+	sgOptions.Audio.bItemPickupSound = GetIniBool("Audio", "Item Pickup Sound", AUTO_PICKUP_DEFAULT(true));
 
 	sgOptions.Audio.nSampleRate = GetIniInt("Audio", "Sample Rate", DEFAULT_AUDIO_SAMPLE_RATE);
 	sgOptions.Audio.nChannels = GetIniInt("Audio", "Channels", DEFAULT_AUDIO_CHANNELS);
@@ -247,41 +247,41 @@ void LoadOptions()
 	sgOptions.Graphics.bUpscale = false;
 #endif
 	sgOptions.Graphics.bFitToScreen = GetIniBool("Graphics", "Fit to Screen", true);
-	GetIniValue("Graphics", "Scaling Quality", sgOptions.Graphics.szScaleQuality, sizeof(sgOptions.Graphics.szScaleQuality), "2");
-	sgOptions.Graphics.bIntegerScaling = GetIniBool("Graphics", "Integer Scaling", false);
+	GetIniValue("Graphics", "Scaling Quality", sgOptions.Graphics.szScaleQuality, sizeof(sgOptions.Graphics.szScaleQuality), "0");
+	sgOptions.Graphics.bIntegerScaling = GetIniBool("Graphics", "Integer Scaling", true);
 	sgOptions.Graphics.bVSync = GetIniBool("Graphics", "Vertical Sync", true);
 	sgOptions.Graphics.bBlendedTransparancy = GetIniBool("Graphics", "Blended Transparency", true);
 	sgOptions.Graphics.nGammaCorrection = GetIniInt("Graphics", "Gamma Correction", 100);
 	sgOptions.Graphics.bColorCycling = GetIniBool("Graphics", "Color Cycling", true);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	sgOptions.Graphics.bHardwareCursor = GetIniBool("Graphics", "Hardware Cursor", HardwareCursorDefault());
-	sgOptions.Graphics.bHardwareCursorForItems = GetIniBool("Graphics", "Hardware Cursor For Items", false);
+	sgOptions.Graphics.bHardwareCursorForItems = GetIniBool("Graphics", "Hardware Cursor For Items", true);
 	sgOptions.Graphics.nHardwareCursorMaxSize = GetIniInt("Graphics", "Hardware Cursor Maximum Size", 128);
 #endif
 	sgOptions.Graphics.bFPSLimit = GetIniBool("Graphics", "FPS Limiter", true);
 	sgOptions.Graphics.bShowFPS = (GetIniInt("Graphics", "Show FPS", 0) != 0);
 
 	sgOptions.Gameplay.nTickRate = GetIniInt("Game", "Speed", 20);
-	sgOptions.Gameplay.bRunInTown = GetIniBool("Game", "Run in Town", AUTO_PICKUP_DEFAULT(false));
+	sgOptions.Gameplay.bRunInTown = GetIniBool("Game", "Run in Town", AUTO_PICKUP_DEFAULT(true));
 	sgOptions.Gameplay.bGrabInput = GetIniBool("Game", "Grab Input", false);
 	sgOptions.Gameplay.bTheoQuest = GetIniBool("Game", "Theo Quest", false);
 	sgOptions.Gameplay.bCowQuest = GetIniBool("Game", "Cow Quest", false);
-	sgOptions.Gameplay.bFriendlyFire = GetIniBool("Game", "Friendly Fire", true);
-	sgOptions.Gameplay.bTestBard = GetIniBool("Game", "Test Bard", false);
-	sgOptions.Gameplay.bTestBarbarian = GetIniBool("Game", "Test Barbarian", false);
-	sgOptions.Gameplay.bExperienceBar = GetIniBool("Game", "Experience Bar", false);
-	sgOptions.Gameplay.bEnemyHealthBar = GetIniBool("Game", "Enemy Health Bar", false);
-	sgOptions.Gameplay.bAutoGoldPickup = GetIniBool("Game", "Auto Gold Pickup", AUTO_PICKUP_DEFAULT(false));
+	sgOptions.Gameplay.bFriendlyFire = GetIniBool("Game", "Friendly Fire", false);
+	sgOptions.Gameplay.bTestBard = GetIniBool("Game", "Test Bard", true);
+	sgOptions.Gameplay.bTestBarbarian = GetIniBool("Game", "Test Barbarian", true);
+	sgOptions.Gameplay.bExperienceBar = GetIniBool("Game", "Experience Bar", true);
+	sgOptions.Gameplay.bEnemyHealthBar = GetIniBool("Game", "Enemy Health Bar", true);
+	sgOptions.Gameplay.bAutoGoldPickup = GetIniBool("Game", "Auto Gold Pickup", AUTO_PICKUP_DEFAULT(true));
 	sgOptions.Gameplay.bAdriaRefillsMana = GetIniBool("Game", "Adria Refills Mana", false);
 	sgOptions.Gameplay.bAutoEquipWeapons = GetIniBool("Game", "Auto Equip Weapons", true);
-	sgOptions.Gameplay.bAutoEquipArmor = GetIniBool("Game", "Auto Equip Armor", AUTO_PICKUP_DEFAULT(false));
-	sgOptions.Gameplay.bAutoEquipHelms = GetIniBool("Game", "Auto Equip Helms", AUTO_PICKUP_DEFAULT(false));
+	sgOptions.Gameplay.bAutoEquipArmor = GetIniBool("Game", "Auto Equip Armor", AUTO_PICKUP_DEFAULT(true));
+	sgOptions.Gameplay.bAutoEquipHelms = GetIniBool("Game", "Auto Equip Helms", AUTO_PICKUP_DEFAULT(true));
 	sgOptions.Gameplay.bAutoEquipShields = GetIniBool("Game", "Auto Equip Shields", AUTO_PICKUP_DEFAULT(false));
-	sgOptions.Gameplay.bAutoEquipJewelry = GetIniBool("Game", "Auto Equip Jewelry", AUTO_PICKUP_DEFAULT(false));
+	sgOptions.Gameplay.bAutoEquipJewelry = GetIniBool("Game", "Auto Equip Jewelry", AUTO_PICKUP_DEFAULT(true));
 	sgOptions.Gameplay.bRandomizeQuests = GetIniBool("Game", "Randomize Quests", true);
-	sgOptions.Gameplay.bShowMonsterType = GetIniBool("Game", "Show Monster Type", false);
-	sgOptions.Gameplay.bDisableCripplingShrines = GetIniBool("Game", "Disable Crippling Shrines", false);
-	sgOptions.Gameplay.bAutoRefillBelt = GetIniBool("Game", "Auto Refill Belt", AUTO_PICKUP_DEFAULT(false));
+	sgOptions.Gameplay.bShowMonsterType = GetIniBool("Game", "Show Monster Type", true);
+	sgOptions.Gameplay.bDisableCripplingShrines = GetIniBool("Game", "Disable Crippling Shrines", true);
+	sgOptions.Gameplay.bAutoRefillBelt = GetIniBool("Game", "Auto Refill Belt", AUTO_PICKUP_DEFAULT(true));
 
 	GetIniValue("Network", "Bind Address", sgOptions.Network.szBindAddress, sizeof(sgOptions.Network.szBindAddress), "0.0.0.0");
 	sgOptions.Network.nPort = GetIniInt("Network", "Port", 6112);
