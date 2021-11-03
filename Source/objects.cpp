@@ -4341,7 +4341,7 @@ bool Object::IsDisabled() const
 	if (IsNoneOf(_otype, _object_id::OBJ_SHRINEL, _object_id::OBJ_SHRINER)) {
 		return false;
 	}
-	return IsAnyOf(static_cast<shrine_type>(_oVar1), shrine_type::ShrineFascinating, shrine_type::ShrineOrnate, shrine_type::ShrineSacred);
+	return IsAnyOf(static_cast<shrine_type>(_oVar1), shrine_type::ShrineFascinating, shrine_type::ShrineOrnate, shrine_type::ShrineSacred, shrine_type::ShrineEnchanted, shrine_type::ShrineGloomy, shrine_type::ShrineGlowing, shrine_type::ShrineHidden, shrine_type::ShrineHoly, shrine_type::ShrineMendicant, shrine_type::ShrineMurphys, shrine_type::ShrineTainted);
 }
 
 void InitObjectGFX()
@@ -5487,7 +5487,7 @@ void GetObjectStr(const Object &object)
 		}
 	}
 	if (object.IsDisabled()) {
-		strcpy(tempstr, fmt::format(_(/* TRANSLATORS: If user enabled diablo.ini setting "Disable Crippling Shrines" is set to 1; also used for Na-Kruls leaver */ "{:s} (disabled)"), infostr).c_str());
+		strcpy(tempstr, fmt::format(_(/* TRANSLATORS: If user enabled diablo.ini setting "Disable Crippling Shrines" is set to 1; also used for Na-Kruls leaver */ "{:s}"), infostr).c_str());
 		strcpy(infostr, tempstr);
 		InfoColor = UiFlags::ColorRed;
 	}
