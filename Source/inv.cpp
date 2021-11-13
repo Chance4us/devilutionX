@@ -1109,6 +1109,70 @@ void CleanupItems(Item *item, int ii)
 	}
 }
 
+enum can_put_result : uint8_t {
+	// clang-format off
+	CANPUT_NO_ADJACENT_ITEMS,
+	CANPUT_FAIL,
+	CANPUT_OK,
+	// clang-format on
+};
+
+can_put_result CanPutAdjacent(Point position)
+{
+	if (!CanPut(position))
+		return CANPUT_FAIL;
+
+	// check adjacent tiles to avoid dropping items in unreachable places
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			Point pos = position + Displacement { x, y };
+			if (InDungeonBounds(pos)) {
+				if (dItem[pos.x][pos.y] != 0)
+					return CANPUT_OK;
+			}
+		}
+	}
+
+	return CANPUT_NO_ADJACENT_ITEMS;
+}
+
+std::optional<Point> FindClosestValidItemPosition(Point startingPosition, unsigned int minimumRadius, unsigned int maximumRadius)
+{
+	if (minimumRadius > maximumRadius) {
+		return {}; // No valid search space with the given params.
+	}
+
+	if (minimumRadius == 0U) {
+		if (CanPut(startingPosition)) {
+			return startingPosition;
+		}
+		minimumRadius = 1;
+	}
+
+	for (int range = minimumRadius; range <= maximumRadius; range++) {
+		int adjacentFails = 0;
+		for (int yy = -range; yy <= range; yy++) {
+			// optimization to only check edges of the square
+			// makes sure we don't check same tiles multiple times
+			int step = range * 2;
+			if (yy == -range || yy == range)
+				step = 1;
+			for (int xx = -range; xx <= range; xx += step) {
+				Point pos = startingPosition + Displacement { xx, yy };
+				can_put_result res = CanPutAdjacent(pos);
+				if (res == CANPUT_OK)
+					return pos;
+				if (res == CANPUT_NO_ADJACENT_ITEMS)
+					adjacentFails++;
+			}
+		}
+		if (adjacentFails != 0)
+			break;
+	}
+
+	return {};
+}
+
 bool PutItem(Player &player, Point &position)
 {
 	if (ActiveItemCount >= MAXITEMS)
@@ -1119,18 +1183,8 @@ bool PutItem(Player &player, Point &position)
 	if (position.WalkingDistance(player.position.tile) > 1) {
 		position = player.position.tile + d;
 	}
-	if (CanPut(position))
-		return true;
 
-	position = player.position.tile + Left(d);
-	if (CanPut(position))
-		return true;
-
-	position = player.position.tile + Right(d);
-	if (CanPut(position))
-		return true;
-
-	std::optional<Point> itemPosition = FindClosestValidPosition(CanPut, player.position.tile, 1, 50);
+	std::optional<Point> itemPosition = FindClosestValidItemPosition(player.position.tile, 0, 50);
 
 	if (itemPosition) {
 		position = *itemPosition;
@@ -1764,6 +1818,10 @@ void SyncGetItem(Point position, int idx, uint16_t ci, int iseed)
 
 bool CanPut(Point position)
 {
+	if (!InDungeonBounds(position))
+		return false;
+	if (!InDungeonBounds(position + Displacement { 1, 1 }))
+		return false;
 	if (dItem[position.x][position.y] != 0)
 		return false;
 	if (nSolidTable[dPiece[position.x][position.y]])
@@ -1797,21 +1855,12 @@ bool TryInvPut()
 		return false;
 
 	auto &myPlayer = Players[MyPlayerId];
+	std::optional<Point> itemPosition = FindClosestValidItemPosition(myPlayer.position.tile, 0, 50);
 
-	Direction dir = GetDirection(myPlayer.position.tile, cursPosition);
-	if (CanPut(myPlayer.position.tile + dir)) {
+	if (itemPosition) {
 		return true;
 	}
-
-	if (CanPut(myPlayer.position.tile + Left(dir))) {
-		return true;
-	}
-
-	if (CanPut(myPlayer.position.tile + Right(dir))) {
-		return true;
-	}
-
-	return CanPut(myPlayer.position.tile);
+	return false;
 }
 
 int InvPutItem(Player &player, Point position)
