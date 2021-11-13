@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <fmt/format.h>
+#include <queue>
 
 #include "controls/plrctrls.h"
 #include "cursor.h"
@@ -1109,6 +1110,37 @@ void CleanupItems(Item *item, int ii)
 	}
 }
 
+std::optional<Point> FindClosestValidItemPosition(Point startingPosition)
+{
+	if (CanPut(startingPosition)) {
+		return startingPosition;
+	}
+	if (dItem[startingPosition.x][startingPosition.y] == 0)
+		return {};
+
+	bool checkedTiles[MAXDUNX][MAXDUNY] = { false };
+	std::queue<Point> tilesToCheck;
+	tilesToCheck.push(startingPosition);
+	while (!tilesToCheck.empty()) {
+		Point currentPosition = tilesToCheck.front();
+		tilesToCheck.pop();
+		for (auto dir : PathDirs) {
+			Point newPosition = currentPosition + dir;
+			if (InDungeonBounds(newPosition)) {
+				if (!checkedTiles[newPosition.x][newPosition.y]) {
+					checkedTiles[newPosition.x][newPosition.y] = true;
+					if (CanPut(newPosition))
+						return newPosition;
+					if (dItem[newPosition.x][newPosition.y] != 0)
+						tilesToCheck.push(newPosition);
+				}
+			}
+		}
+	}
+
+	return {};
+}
+
 bool PutItem(Player &player, Point &position)
 {
 	if (ActiveItemCount >= MAXITEMS)
@@ -1119,18 +1151,8 @@ bool PutItem(Player &player, Point &position)
 	if (position.WalkingDistance(player.position.tile) > 1) {
 		position = player.position.tile + d;
 	}
-	if (CanPut(position))
-		return true;
 
-	position = player.position.tile + Left(d);
-	if (CanPut(position))
-		return true;
-
-	position = player.position.tile + Right(d);
-	if (CanPut(position))
-		return true;
-
-	std::optional<Point> itemPosition = FindClosestValidPosition(CanPut, player.position.tile, 1, 50);
+	std::optional<Point> itemPosition = FindClosestValidItemPosition(position);
 
 	if (itemPosition) {
 		position = *itemPosition;
@@ -1764,6 +1786,21 @@ void SyncGetItem(Point position, int idx, uint16_t ci, int iseed)
 
 bool CanPut(Point position)
 {
+	// TODO: remove after collision of houses has been fixed - see https://github.com/diasurgical/devilutionX/issues/3514
+	if (IsAnyOf(position,
+	        Point { 53, 45 }, Point { 46, 45 }, Point { 46, 44 },                                     // house near portal location
+	        Point { 27, 16 }, Point { 29, 18 }, Point { 27, 27 },                                     // cathedral
+	        Point { 38, 67 }, Point { 38, 66 }, Point { 41, 67 }, Point { 41, 64 }, Point { 40, 64 }, // gillian's house
+	        Point { 71, 81 }, Point { 68, 81 }, Point { 68, 80 }, Point { 70, 78 }, Point { 71, 78 }, // house near farnham
+	        Point { 73, 71 },                                                                         // house near spawn
+	        Point { 60, 61 }, Point { 60, 60 }, Point { 62, 59 }, Point { 62, 58 },                   // griswold's house
+	        Point { 9, 45 }                                                                           // stones around wirt
+	        ))
+		return false;
+	if (!InDungeonBounds(position))
+		return false;
+	if (!InDungeonBounds(position + Displacement { 1, 1 }))
+		return false;
 	if (dItem[position.x][position.y] != 0)
 		return false;
 	if (nSolidTable[dPiece[position.x][position.y]])
@@ -1797,21 +1834,13 @@ bool TryInvPut()
 		return false;
 
 	auto &myPlayer = Players[MyPlayerId];
-
 	Direction dir = GetDirection(myPlayer.position.tile, cursPosition);
-	if (CanPut(myPlayer.position.tile + dir)) {
+	std::optional<Point> itemPosition = FindClosestValidItemPosition(myPlayer.position.tile + dir);
+
+	if (itemPosition) {
 		return true;
 	}
-
-	if (CanPut(myPlayer.position.tile + Left(dir))) {
-		return true;
-	}
-
-	if (CanPut(myPlayer.position.tile + Right(dir))) {
-		return true;
-	}
-
-	return CanPut(myPlayer.position.tile);
+	return false;
 }
 
 int InvPutItem(Player &player, Point position)
