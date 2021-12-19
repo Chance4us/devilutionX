@@ -113,7 +113,9 @@ void FillRect(const Surface &out, int x, int y, int width, int height, Uint8 col
 void DrawItemNameLabels(const Surface &out)
 {
 	isLabelHighlighted = false;
-
+	if ( leveltype == DTYPE_TOWN) invertHighlightToggle = false;
+	else invertHighlightToggle = true;
+		
 	for (unsigned int i = 0; i < labelQueue.size(); ++i) {
 		std::unordered_set<int> backtrace;
 
