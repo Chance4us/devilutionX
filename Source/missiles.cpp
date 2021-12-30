@@ -262,7 +262,7 @@ bool MonsterMHit(int pnum, int m, int mindam, int maxdam, int dist, missile_id t
 
 	const auto &player = Players[pnum];
 
-	if (MissilesData[t].mType == 0) {
+	if (MissilesData[t].mType == 0 && mir == MISR_NONE) {
 		dam = player._pIBonusDamMod + dam * player._pIBonusDam / 100 + dam;
 		if (player._pClass == HeroClass::Rogue)
 			dam += player._pDamageMod;
@@ -383,7 +383,7 @@ bool Plr2PlrMHit(int pnum, int p, int mindam, int maxdam, int dist, missile_id m
 		dam = target._pHitPoints / 3;
 	} else {
 		dam = mindam + GenerateRnd(maxdam - mindam + 1);
-		if (MissilesData[mtype].mType == 0)
+		if (MissilesData[mtype].mType == 0 && MissilesData[mtype].mResist == MISR_NONE)
 			dam += player._pIBonusDamMod + player._pDamageMod + dam * player._pIBonusDam / 100;
 		if (!shift)
 			dam <<= 6;
@@ -2862,7 +2862,7 @@ void MI_LArrow(Missile &missile)
 
 		missile_resistance rst = MissilesData[missile._mitype].mResist;
 		MissilesData[missile._mitype].mResist = MISR_NONE;
-		MoveMissileAndCheckMissileCol(missile, mind, maxd, true, true);
+		MoveMissileAndCheckMissileCol(missile, mind, maxd, true, false);
 		MissilesData[missile._mitype].mResist = rst;
 
 		if (missile._mirange == 0) {
