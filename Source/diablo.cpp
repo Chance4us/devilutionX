@@ -1471,13 +1471,13 @@ void InitKeymapActions()
 	    DVL_VK_LMENU,
 	    [] { AltPressed(true); },
 	    [] { AltPressed(false); });
-	sgOptions.Keymapper.AddAction(
+	/*sgOptions.Keymapper.AddAction(
 	    "Toggle Item Highlighting",
 	    N_("Toggle item highlighting"),
 	    N_("Permanent show/hide items on ground."),
 	    DVL_VK_RCONTROL,
 	    nullptr,
-	    [] { ToggleItemLabelHighlight(); });
+	    [] { ToggleItemLabelHighlight(); });*/
 	sgOptions.Keymapper.AddAction(
 	    "Toggle Automap",
 	    N_("Toggle automap"),
