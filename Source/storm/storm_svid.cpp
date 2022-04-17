@@ -7,6 +7,9 @@
 #include <SmackerDecoder.h>
 
 #ifndef NOSOUND
+#include <Aulib/ResamplerSpeex.h>
+#include <Aulib/Stream.h>
+
 #include "utils/push_aulib_decoder.h"
 #endif
 
@@ -14,7 +17,7 @@
 #include "engine/assets.hpp"
 #include "options.h"
 #include "palette.h"
-#include "utils/aulib.hpp"
+//#include "utils/aulib.hpp"
 #include "utils/display.h"
 #include "utils/log.hpp"
 #include "utils/sdl_compat.h"
@@ -260,7 +263,7 @@ bool SVidPlayBegin(const char *filename, int flags)
 		SVidAudioBuffer = std::unique_ptr<int16_t[]> { new int16_t[audioInfo.idealBufferSize] };
 		auto decoder = std::make_unique<PushAulibDecoder>(audioInfo.nChannels, audioInfo.sampleRate);
 		SVidAudioDecoder = decoder.get();
-		SVidAudioStream.emplace(/*rwops=*/nullptr, std::move(decoder), CreateAulibResampler(), /*closeRw=*/false);
+		SVidAudioStream.emplace(/*rwops=*/nullptr, std::move(decoder), std::make_unique<Aulib::ResamplerSpeex>(*sgOptions.Audio.resamplingQuality), /*closeRw=*/false);
 		const float volume = static_cast<float>(*sgOptions.Audio.soundVolume - VOLUME_MIN) / -VOLUME_MIN;
 		SVidAudioStream->setVolume(volume);
 		if (!diablo_is_focused())
