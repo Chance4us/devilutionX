@@ -65,6 +65,7 @@ bool IsHighlightingLabelsEnabled()
 
 void AddItemToLabelQueue(int id, int x, int y)
 {
+	if ( leveltype == DTYPE_TOWN) return;
 	if (!IsHighlightingLabelsEnabled())
 		return;
 	Item &item = Items[id];
