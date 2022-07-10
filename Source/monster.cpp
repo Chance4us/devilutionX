@@ -1784,7 +1784,8 @@ void GroupUnity(Monster &monster)
 	assert(monster.uniqType == 0);
 
 	auto &leader = Monsters[monster.leader];
-	if (IsLineNotSolid(monster.position.tile, leader.position.future)) {
+	bool leaderIsStuck = leader.mode == MonsterMode::Stand && !DirOK(monster.leader, monster.direction);
+	if (!leaderIsStuck && IsLineNotSolid(monster.position.tile, leader.position.future)) {
 		if (monster.leaderRelation == LeaderRelation::Separated
 		    && monster.position.tile.WalkingDistance(leader.position.future) < 4) {
 			// Reunite the separated monster with the pack
