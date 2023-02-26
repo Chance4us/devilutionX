@@ -1807,7 +1807,7 @@ void InitKeymapActions()
 	    "Screenshot",
 	    N_("Screenshot"),
 	    N_("Takes a screenshot."),
-	    SDLK_PRINTSCREEN,
+	    SDLK_F4,
 	    nullptr,
 	    CaptureScreen);
 	sgOptions.Keymapper.AddAction(
