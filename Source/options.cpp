@@ -575,7 +575,7 @@ string_view OptionCategoryBase::GetDescription() const
 
 StartUpOptions::StartUpOptions()
     : OptionCategoryBase("StartUp", N_("Start Up"), N_("Start Up Settings"))
-    , gameMode("Game", OptionEntryFlags::NeedHellfireMpq | OptionEntryFlags::RecreateUI, N_("Game Mode"), N_("Play Diablo or Hellfire."), StartUpGameMode::Ask,
+    , gameMode("Game", OptionEntryFlags::NeedHellfireMpq | OptionEntryFlags::RecreateUI, N_("Game Mode"), N_("Play Diablo or Hellfire."), StartUpGameMode::Hellfire,
           {
               { StartUpGameMode::Diablo, N_("Diablo") },
               // Ask is missing, cause we want to hide it from UI-Settings.
