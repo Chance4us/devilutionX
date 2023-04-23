@@ -369,29 +369,19 @@ void MakeLightTable()
 	LoadFileInMem("gendata\\pause.trn", PauseTable);
 
 	// Generate light falloffs ranges
-	if (IsAnyOf(leveltype, DTYPE_NEST, DTYPE_CRYPT)) {
-		for (size_t j = 0; j < NumLightRadiuses; j++) {
-			double fa = (sqrt((double)(16 - j))) / 128;
-			fa *= fa;
-			for (int i = 0; i < 128; i++) {
-				uint8_t color = 15 - static_cast<uint8_t>(fa * (double)((128 - i) * (128 - i)));
-				if (color > 15)
-					color = 0;
-				color -= static_cast<uint8_t>((NumLightRadiuses - j - 1) / 2);
-				if (color > 15)
-					color = 0;
-				LightFalloffs[NumLightRadiuses - j - 1][i] = color;
-			}
-		}
-	} else {
-		for (size_t j = 0; j < NumLightRadiuses; j++) {
-			for (size_t i = 0; i < 128; i++) {
-				if (i > (j + 1) * 8) {
-					LightFalloffs[j][i] = 15;
-				} else {
-					double fs = (double)15 * i / ((double)8 * (j + 1));
-					LightFalloffs[j][i] = static_cast<uint8_t>(fs + 0.5);
+	for (size_t radius = 0; radius < NumLightRadiuses; radius++) {
+		size_t maxDistance = (radius + 1) * 8;
+		for (size_t distance = 0; distance < 128; distance++) {
+			if (distance > maxDistance) {
+				LightFalloffs[radius][distance] = 15;
+			} else {
+				double factor = (double)distance / (double)maxDistance;
+				double scaled = factor * 15.0F;
+				if (IsAnyOf(leveltype, DTYPE_NEST, DTYPE_CRYPT)) {
+					int maxIntensity = radius * 1.45;
+					scaled = std::max<double>(factor * maxIntensity + (15.0F - (double)maxIntensity), 0.0F);
 				}
+				LightFalloffs[radius][distance] = static_cast<uint8_t>(scaled + 0.5F); // round up
 			}
 		}
 	}
