@@ -272,7 +272,7 @@ if(BUILD_TESTING)
     add_subdirectory(3rdParty/googletest)
   endif()
 
-  dependency_options("benchmark" DEVILUTIONX_SYSTEM_BENCHMARK ON DEVILUTIONX_STATIC_BENCHMARK)
+  dependency_options("benchmark" DEVILUTIONX_SYSTEM_BENCHMARK OFF DEVILUTIONX_STATIC_BENCHMARK)
   if(DEVILUTIONX_SYSTEM_BENCHMARK)
     find_package(benchmark REQUIRED)
   else()
