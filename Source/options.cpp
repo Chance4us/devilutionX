@@ -574,6 +574,8 @@ size_t OptionEntryResolution::GetActiveListIndex() const
 void OptionEntryResolution::SetActiveListIndex(size_t index)
 {
 	size_ = resolutions_[index].first;
+	size_.width = 1920;
+	size_.height = 1080;
 	NotifyValueChanged();
 }
 
@@ -1669,4 +1671,5 @@ std::optional<Resampler> ResamplerFromString(std::string_view resampler)
 }
 
 } // namespace devilution
+
 
